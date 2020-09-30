@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,10 +58,10 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.1.0")
+(defconst mpdmacs-version "0.1.1")
 
 (defgroup mpdmacs nil
-  "A lightweight, ergonomic MPD client for Emacs."
+  "A lightweight MPD client for Emacs."
   :group 'comm)
 
 (defcustom mpdmacs-connection-name "mpdmacs"
@@ -94,9 +94,14 @@ unique."
 
 (defvar mpdmacs-mode-line-update-function #'mpdmacs--update-mode-line)
 
-(defvar mpdmacs-load-hook '())
+(defvar mpdmacs-load-hook '()
+  "Hooks invoked after mpdmacs is loaded.")
 
-(defvar mpdmacs-unload-hook '())
+(defvar mpdmacs-unload-hook '()
+  "Hooks invoked before mpdmacs is unloaded.")
+
+(defvar mpdmacs-player-state-changed-hook '()
+  "Hooks invoked on change in player state.")
 
 ;; We'll re-use the elmpd logging feature, but with our own, dedicated facility.
 (defun mpdmacs-log (level fmt &rest objects)
@@ -105,7 +110,7 @@ unique."
 
 (defun mpdmacs--update-mode-line ()
   "Add the current track to the mode-line."
-  (setq global-mode-string (if mpdmacs--current-track mpdmacs--current-track "N/A")))
+  (setq global-mode-string (if mpdmacs--current-song-label mpdmacs--current-song-label "N/A")))
 
 ;;; State
 
@@ -115,12 +120,17 @@ unique."
 `mpdmacs' will setup a long-lived connection to monitor updates
 on the server.")
 
-(defvar mpdmacs--current-track nil
+(defvar mpdmacs--current-song-label nil
   "Short string describing the current track (if any).
 
 Takes the form of ARTIST - TITLE.  Updated automatically
 whenever `mpdmacs--connection' is informed of a change in player
 state.")
+
+(defvar mpdmacs--current-song-file nil
+  "File corresponding to the current track (if any).
+
+Will be nil if the player is stopped.")
 
 (defvar mpdmacs--stored-playlists nil
   "List of last-known stored playlists.
@@ -141,8 +151,8 @@ of a change in the stored playlists.")
 Updated automatically by `mpdmacs--connection' when it is
 informed of any change on the server side.")
 
-(defun mpdmacs--update-current-track ()
-  "Update `mpdmacs--current-track'."
+(defun mpdmacs--update-player-state ()
+  "Update `mpdmacs--current-song-label' & `mpdmacs--current-file'."
   (elmpd-send
    mpdmacs--connection
    "currentsong"
@@ -150,23 +160,28 @@ informed of any change on the server side.")
      (if (not ok)
          (progn
            (mpdmacs-log 'error "Failed to get current track: %s" text)
-           (setq mpdmacs--current-track "N/A"))
+           (setq mpdmacs--current-song-label "N/A"))
        (let ((artist
               (if (string-match "^Artist: \\(.*\\)" text)
                   (substring text (match-beginning 1) (match-end 1))))
+             (file
+                (if (string-match "^file: \\(.*\\)$" text)
+                    (substring text (match-beginning 1) (match-end 1))))
              (title
               (if (string-match "^Title: \\(.*\\)" text)
                   (substring text (match-beginning 1) (match-end 1)))))
          (setq
-          mpdmacs--current-track
+          mpdmacs--current-song-label
           (cond
            ((and artist title)
             (format "%s - %s" artist title))
            (artist (format "%s - N/A" artist))
            (title (format "N/A - %s" title))
-           (t "")))
-         (mpdmacs-log 'debug "Updated current track to %s" mpdmacs--current-track)))
-     (if mpdmacs-mode-line-update-function (funcall mpdmacs-mode-line-update-function)))))
+           (t ""))
+          mpdmacs--current-song-file file)
+         (mpdmacs-log 'debug "Updated current track to %s" mpdmacs--current-song-label)))
+     (if mpdmacs-mode-line-update-function (funcall mpdmacs-mode-line-update-function))
+     (if mpdmacs-player-state-changed-hook (run-hooks mpdmacs-player-state-changed-hook)))))
 
 (defun mpdmacs--update-stored-playlists ()
   "Update `mpdmacs--stored-playlists'."
@@ -207,7 +222,7 @@ returned."
    "status"
    (lambda (_conn ok text)
      (if (not ok)
-         ;; TODO(sp1ff): set all options to 'unknown?
+         ;; Set all options to 'unknown?
          (mpdmacs-log 'error "Failed to get player status: %s" text)
        (cl-mapc
         (lambda (line)
@@ -235,8 +250,12 @@ returned."
                      ((string= "pause" value) 'pause)
                      (t 'unknown)))))
            ((string-prefix-p "xfade: " line)
-            ;; TODO(sp1ff): this is awful-- should validate the input string
-            (setf (alist-get 'crossfade mpdmacs--player-options) (string-to-number (substring line 7))))))
+            (let ((text (substring line 7)))
+              (setf
+               (alist-get 'crossfade mpdmacs--player-options)
+               (if (string-match "[.0-9]+" text)
+                   (string-to-number (substring line 7))
+                 'unknown))))))
         (split-string text "\n" t))
        ;; replay gain status isn't included in the output of the
        ;; "status" command, so we have to go back to the server for
@@ -249,7 +268,7 @@ returned."
           ;; XXX", but just in case the protocol changes out from
           ;; under us, be ready to process multiple lines.
           (if (not ok)
-              ;; TODO(sp1ff): set this option to 'unknown?
+              ;; Set this option to 'unknown?
               (mpdmacs-log 'error "Failed to get replay-gain-mode: %s" text)
             (cl-mapc
              (lambda (line)
@@ -276,7 +295,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
      (cond
       ((eq x 'player)
        (mpdmacs-log 'debug "idle event: player")
-       (mpdmacs--update-current-track))
+       (mpdmacs--update-player-state))
       ((eq x 'stored)
        (mpdmacs-log 'debug "idle event: stored_playlists")
        (mpdmacs--update-stored-playlists))
@@ -287,10 +306,18 @@ subsystems will be listed in SUBSYS (a list of symbols)."
        (mpdmacs-log 'error (format "Unknown idle event %s" x)))))
    subsys))
 
+(defun mpdmacs-get-current-file ()
+  "Retrieve the file URI to the current track (may be nil)."
+  mpdmacs--current-file)
+
 ;;; Commands
 
+(defun mpdmacs-send (command &optional callback)
+  "Send an arbitrary COMMAND with CALLBACK over the mpdmacs connection."
+  (elmpd-send mpdmacs--connection command callback))
+
 (defun mpdmacs-play ()
-  "Sart `mpd' playback."
+  "Start `mpd' playback."
   (interactive)
   (elmpd-send mpdmacs--connection "play"))
 
@@ -298,6 +325,19 @@ subsystems will be listed in SUBSYS (a list of symbols)."
   "Re-play the current song from the beginning."
   (interactive)
   (elmpd-send mpdmacs--connection "seekcur 0"))
+
+(defun mpdmacs-send-to-playlist (playlist)
+  "Send the current track to PLAYLIST."
+  (interactive
+   (list
+    (completing-read "Playlist: " mpdmacs--current-playlists)))
+  (let ((f (elmpd-get-current-file)))
+    (mpdmacs-send
+     (format "playlistadd \"%s\" \"%s\"" playlist f)
+     (lambda (_conn ok text)
+       (if ok
+           (mpdmacs-log 'info "Sent \"%s\" to playlist %s." f playlist)
+         (mpdmacs-log 'error "Failed to send \"%s\" to playlist %s: %s" f playlist text))))))
 
 (defun mpdmacs-stop ()
   "Stop `mpd' playback."
@@ -324,6 +364,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
 
 (define-key mpdmacs-keymap "P"         #'mpdmacs-play)
 (define-key mpdmacs-keymap (kbd "DEL") #'mpdmacs-replay)
+(define-key mpdmacs-keymap "/"         #'mpdmacs-send-to-playlist)
 (define-key mpdmacs-keymap "s"         #'mpdmacs-stop)
 (define-key mpdmacs-keymap ">"         #'mpdmacs-next)
 (define-key mpdmacs-keymap "<"         #'mpdmacs-previous)
@@ -341,7 +382,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
     :port mpdmacs-port
     :local mpdmacs-socket
     :subsystems '((player stored options) . mpdmacs--watcher)))
-  (mpdmacs--update-current-track)
+  (mpdmacs--update-player-state)
   (mpdmacs--update-stored-playlists)
   (mpdmacs--update-player-options)
   (if mpdmacs-load-hook (run-hooks mpdmacs-load-hook))

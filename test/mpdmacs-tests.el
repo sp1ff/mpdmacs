@@ -105,7 +105,7 @@ OK
     (should (not (process-live-p server)))
     (message "\n%s\n" (with-current-buffer "*mpdmacs-test-updates*" (buffer-string)))
 
-    (should (string= mpdmacs--current-track "De-Phazz - Plastic Love Memory (No. Nine)"))
+    (should (string= mpdmacs--current-song-label "De-Phazz - Plastic Love Memory (No. Nine)"))
     (should (equal mpdmacs--stored-playlists '("foo" "saturday-afternoons-in-santa-cruz")))))
 
 (provide 'mpdmacs-tests)

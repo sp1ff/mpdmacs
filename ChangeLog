@@ -1,3 +1,16 @@
+2020-09-30  Michael Herstine  <sp1ff@pobox.com>
+
+	Work in progress.
+	This commit updates `mpdmacs' in a number of ways:
+
+	    1. Miscellaneous docstring improvements
+	    2. Added 'mpdmacs-player-state-changed-hook'
+	    3. Added 'mpdmacs--current-song-file' & associated accessor
+	       & mutator
+	    4. Re-named numerous functions & variables for clarity
+	    5. Validated the "xfade" setting before updating options
+	    6. Added 'mpdmacs-send-to-playlsit'
+
 2020-09-29  Michael Herstine  <sp1ff@pobox.com>
 
 	Initial commit.
