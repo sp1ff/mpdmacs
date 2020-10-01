@@ -1,3 +1,32 @@
+2020-10-01  Michael Herstine  <sp1ff@pobox.com>
+
+	Work in progress.
+	This commit updates `mpdmacs' in a number of ways:
+
+	    1. (mpdmacs--update-mode-line) Fix bug in the way in which
+	       'global-mode-string' is set
+	    2. Added 'volume' to the player options tracked
+	    3. Fixed a bug in the invocation of 'mpdmacs-player-state-cahnged-hook'
+	    4. Added 'mpdmacs--intern-number'
+	    5. Added numerous commands
+	       - 'mpdmacs-set-volume'
+	       - 'mpdmacs-inc-volume'
+	       - 'mpdmacs-dec-volume'
+	       - 'mpdmacs-load-playlist'
+	       - 'mpdmacs-get-repeat'
+	       - 'mpdmacs-get-random'
+	       - 'mpdmacs-get-single'
+	       - 'mpdmacs-get-consume'
+	       - 'mpdmacs-get-state'
+	       - 'mpdmacs-get-crossfade'
+	       - 'mpdmacs-get-replay-gain-mode'
+	       - 'mpdmacs-get-volume'
+	       - 'mpdmacs-toggle-repeat'
+	       - 'mpdmacs-toggle-random'
+	       - 'mpdmacs-toggle-consume'
+	    6. fixed bugs in the invocations of 'mpdmacs-load-hook' &
+	       'mpdmacs-unload-hook'
+
 2020-09-30  Michael Herstine  <sp1ff@pobox.com>
 
 	Work in progress.

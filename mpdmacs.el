@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.1.1")
+(defconst mpdmacs-version "0.1.2")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."
@@ -110,7 +110,7 @@ unique."
 
 (defun mpdmacs--update-mode-line ()
   "Add the current track to the mode-line."
-  (setq global-mode-string (if mpdmacs--current-song-label mpdmacs--current-song-label "N/A")))
+  (setq global-mode-string (list (if mpdmacs--current-song-label mpdmacs--current-song-label "N/A"))))
 
 ;;; State
 
@@ -145,7 +145,8 @@ of a change in the stored playlists.")
     (consume          . unknown)
     (state            . unknown)
     (crossfade        . unknown)
-    (replay-gain-mode . unknown))
+    (replay-gain-mode . unknown)
+    (volume           . unknown))
   "Association list mapping player options to values.
 
 Updated automatically by `mpdmacs--connection' when it is
@@ -181,7 +182,7 @@ informed of any change on the server side.")
           mpdmacs--current-song-file file)
          (mpdmacs-log 'debug "Updated current track to %s" mpdmacs--current-song-label)))
      (if mpdmacs-mode-line-update-function (funcall mpdmacs-mode-line-update-function))
-     (if mpdmacs-player-state-changed-hook (run-hooks mpdmacs-player-state-changed-hook)))))
+     (if mpdmacs-player-state-changed-hook (run-hooks 'mpdmacs-player-state-changed-hook)))))
 
 (defun mpdmacs--update-stored-playlists ()
   "Update `mpdmacs--stored-playlists'."
@@ -214,6 +215,12 @@ returned."
    ((string= text "0") nil)
    ((string= text "1") t)
    (t 'unknown)))
+
+(defun mpdmacs--intern-number (text)
+  "Convert TEXT to a numeric value."
+  (if (string-match "[.0-9]+" text)
+      (string-to-number text)
+    'unknown))
 
 (defun mpdmacs--update-player-options ()
   "Updated `mpdmacs--player-options'."
@@ -250,12 +257,13 @@ returned."
                      ((string= "pause" value) 'pause)
                      (t 'unknown)))))
            ((string-prefix-p "xfade: " line)
-            (let ((text (substring line 7)))
-              (setf
-               (alist-get 'crossfade mpdmacs--player-options)
-               (if (string-match "[.0-9]+" text)
-                   (string-to-number (substring line 7))
-                 'unknown))))))
+            (setf
+             (alist-get 'crossfade mpdmacs--player-options)
+             (mpdmacs--intern-number (substring line 7))))
+           ((string-prefix-p "volume: " line)
+            (setf
+             (alist-get 'volume mpdmacs--player-options)
+             (mpdmacs--intern-number (substring line 8))))))
         (split-string text "\n" t))
        ;; replay gain status isn't included in the output of the
        ;; "status" command, so we have to go back to the server for
@@ -293,7 +301,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
   (cl-mapc
    (lambda (x)
      (cond
-      ((eq x 'player)
+      ((or (eq x 'mixer) (eq x 'player))
        (mpdmacs-log 'debug "idle event: player")
        (mpdmacs--update-player-state))
       ((eq x 'stored)
@@ -319,12 +327,12 @@ subsystems will be listed in SUBSYS (a list of symbols)."
 (defun mpdmacs-play ()
   "Start `mpd' playback."
   (interactive)
-  (elmpd-send mpdmacs--connection "play"))
+  (mpdmacs-send "play"))
 
 (defun mpdmacs-replay ()
   "Re-play the current song from the beginning."
   (interactive)
-  (elmpd-send mpdmacs--connection "seekcur 0"))
+  (mpdmacs-send "seekcur 0"))
 
 (defun mpdmacs-send-to-playlist (playlist)
   "Send the current track to PLAYLIST."
@@ -342,22 +350,108 @@ subsystems will be listed in SUBSYS (a list of symbols)."
 (defun mpdmacs-stop ()
   "Stop `mpd' playback."
   (interactive)
-  (elmpd-send mpdmacs--connection "stop"))
+  (mpdmacs-send "stop"))
 
 (defun mpdmacs-next ()
   "Skip ahead to the next track."
   (interactive)
-  (elmpd-send mpdmacs--connection "next"))
+  (mpdmacs-send "next"))
 
 (defun mpdmacs-previous ()
   "Skip back to the previous track."
   (interactive)
-  (elmpd-send mpdmacs--connection "previous"))
+  (mpdmacs-send "previous"))
 
 (defun mpdmacs-clear ()
   "Clear the play queue."
   (interactive)
-  (elmpd-send mpdmacs--connection "clear"))
+  (mpdmacs-send "clear"))
+
+(defvar mpdmacs--volume-completion-list
+  (cl-mapcar (lambda (x) (format "%d" x)) (number-sequence 0 100))
+  "Precomputed list of permissible volume settings.")
+
+(defun mpdmacs-set-volume (vol)
+  "Set the MPD volume to VOL (0-100)."
+  (interactive
+   (list
+    (completing-read
+     "Volume: "
+     mpdmacs--volume-completion-list nil t
+     (let ((curvol (alist-get 'volume mpdmacs--player-options)))
+       (if (eq curvol 'unknown) nil (format "%d" curvol))))))
+  (mpdmacs-send (format "setvol %d" vol)))
+
+(defun mpdmacs--modify-volume (inc)
+  "Change the MPD server volume by INC."
+  (let ((curvol (alist-get 'volume mpdmacs--player-options)))
+    (if (eq curvol 'unknown)
+        (error "Can't increment the volume when the current volume is unknown")
+      (mpdmacs-send (format "setvol %d" (+ curvol inc))))))
+
+(defun mpdmacs-inc-volume (inc)
+  "Increment the current volume by INC."
+  (interactive "P")
+  (mpdmacs--modify-volume inc))
+
+(defun mpdmacs-dec-volume (dec)
+  "Decrement the current volume by DEC."
+  (interactive "P")
+  (mpdmacs--modify-volume (- inc)))
+
+(defun mpdmacs-load-playlist (playlist)
+  "Load PLAYLIST into the queue."
+  (interactive
+   (list
+    (completing-read "Playlist: " mpdmacs--stored-playlists nil 'confirm)))
+  (mpdmacs-send (format "load \"%s\"" playlist)))
+
+
+(defmacro mpdmacs--def-player-opts-viewer (attr)
+  "Define a function retrieving player option ATTR."
+  `(defun ,(intern (format "mpdmacs-get-%s" attr)) ()
+     (interactive)
+     (let ((val (alist-get (quote ,attr) mpdmacs--player-options)))
+       (if (called-interactively-p)
+           (message "%s: %s" (quote ,attr) val))
+       val)))
+
+(mpdmacs--def-player-opts-viewer repeat)
+(mpdmacs--def-player-opts-viewer random)
+(mpdmacs--def-player-opts-viewer single)
+(mpdmacs--def-player-opts-viewer consume)
+(mpdmacs--def-player-opts-viewer state)
+(mpdmacs--def-player-opts-viewer crossfade)
+(mpdmacs--def-player-opts-viewer replay-gain-mode)
+(mpdmacs--def-player-opts-viewer volume)
+
+
+(defmacro mpdmacs--def-player-opts-toggle (attr)
+  "Define a function toggling a player option ATTR."
+  `(defun ,(intern (format "mpdmacs-toggle-%s" attr)) ()
+     (interactive)
+     (let ((rnd (alist-get (quote ,attr) mpdmacs--player-options)))
+       (if (eq rnd 'unknown)
+           (error ,(format "Can't toggle %s when the player is stopped" attr))
+         (mpdmacs-send (format ,(format "%s %%s" attr) (if rnd "0" "1"))
+                       (lambda (_conn ok text)
+                         (if ok
+                             (mpdmacs-log 'info ,(format "%s mode is %%s." attr) (if rnd "off" "on"))
+                           (mpdmacs-log 'error ,(format "Failed to turn %%s %s mode: %%s" attr)
+                                        (if rnd "off" "on") text))))))))
+
+(mpdmacs--def-player-opts-toggle repeat)
+(mpdmacs--def-player-opts-toggle random)
+(mpdmacs--def-player-opts-toggle consume)
+
+(defun mpdmacs-toggle-pause ()
+  "Toggle the MPD server pause status.
+
+Pause is handled differently since we can toggle at the protocol
+level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
+  (interactive)
+  (mpdmacs-send "pause"))
+
 
 (defvar mpdmacs-keymap (make-sparse-keymap)
   "Keymap for `mpdmacs' commands.")
@@ -369,6 +463,13 @@ subsystems will be listed in SUBSYS (a list of symbols)."
 (define-key mpdmacs-keymap ">"         #'mpdmacs-next)
 (define-key mpdmacs-keymap "<"         #'mpdmacs-previous)
 (define-key mpdmacs-keymap "c"         #'mpdmacs-clear)
+(define-key mpdmacs-keymap "v"         #'mpdmacs-set-volume)
+(define-key mpdmacs-keymap "+"         #'mpdmacs-inc-volume)
+(define-key mpdmacs-keymap "-"         #'mpdmacs-dec-volume)
+(define-key mpdmacs-keymap "l"         #'mpdmacs-load-playlist)
+(define-key mpdmacs-keymap "p"         #'mpdmacs-toggle-pause)
+(define-key mpdmacs-keymap "r"         #'mpdmacs-toggle-random)
+(define-key mpdmacs-keymap "R"         #'mpdmacs-toggle-consume)
 
 ;;;###autoload
 (defun mpdmacs-enable ()
@@ -381,17 +482,17 @@ subsystems will be listed in SUBSYS (a list of symbols)."
     :host mpdmacs-host
     :port mpdmacs-port
     :local mpdmacs-socket
-    :subsystems '((player stored options) . mpdmacs--watcher)))
+    :subsystems '((player stored options mixer) . mpdmacs--watcher)))
   (mpdmacs--update-player-state)
   (mpdmacs--update-stored-playlists)
   (mpdmacs--update-player-options)
-  (if mpdmacs-load-hook (run-hooks mpdmacs-load-hook))
+  (if mpdmacs-load-hook (run-hooks 'mpdmacs-load-hook))
   (mpdmacs-log 'info "mpdmacs loaded."))
 
 (defun mpdmacs-unload ()
   "Unload `mpdmacs'."
   (interactive)
-  (if mpdmacs-unload-hook (run-hooks mpdmacs-unload-hook))
+  (if mpdmacs-unload-hook (run-hooks 'mpdmacs-unload-hook))
   (delete-process (elmpd-connection--fd mpdmacs--connection))
   (setq mpdmacs--connection nil)
   (mpdmacs-log 'info "mpdmacs unloaded."))
