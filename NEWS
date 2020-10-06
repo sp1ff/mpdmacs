@@ -1,5 +1,20 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
+* 0.1.3 build:
+
+** User-visible changes
+
+  - Adds 'mpdmacs-sticker-change-hook'
+  - Adds 'mpdmacs-show-current-song-hook'
+  - Added 'mpdmacs-set-crossfade'
+  - Added 'mpdmacs-rotate-single'
+  - Added 'mpdmacs-rotate-replay-gain'
+  - Added 'mdpmacs-show-current-song'
+  - Makes 'mpdmacs-unload' idempotent
+** Bugfixes
+
+  - Fixed a bug in 'mpdmacs-send-to-playlist'
+  - Fixed a bug in 'mpdmacs-dec-volume'
 * 0.1.2 build:
 
 Numerous breaking changes.

@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.1.2
+;; Version: 0.1.3
 ;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.1.2")
+(defconst mpdmacs-version "0.1.3")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."
@@ -92,6 +92,11 @@ unique."
   :group 'mpdmacs
   :type 'string)
 
+(defcustom  mpdmacs-current-song-buffer "*Current Song*"
+  "Buffer for displaying the current song."
+  :group 'mpdmacs
+  :type 'string)
+
 (defvar mpdmacs-mode-line-update-function #'mpdmacs--update-mode-line)
 
 (defvar mpdmacs-load-hook '()
@@ -102,6 +107,12 @@ unique."
 
 (defvar mpdmacs-player-state-changed-hook '()
   "Hooks invoked on change in player state.")
+
+(defvar mpdmacs-sticker-change-hook '()
+  "Hooks invoked on changes to the sticker database.")
+
+(defvar mpdmacs-show-current-song-hook '()
+  "Hooks invoked when displaying the current song.")
 
 ;; We'll re-use the elmpd logging feature, but with our own, dedicated facility.
 (defun mpdmacs-log (level fmt &rest objects)
@@ -178,7 +189,7 @@ informed of any change on the server side.")
             (format "%s - %s" artist title))
            (artist (format "%s - N/A" artist))
            (title (format "N/A - %s" title))
-           (t ""))
+           (t "Untitled track"))
           mpdmacs--current-song-file file)
          (mpdmacs-log 'debug "Updated current track to %s" mpdmacs--current-song-label)))
      (if mpdmacs-mode-line-update-function (funcall mpdmacs-mode-line-update-function))
@@ -284,7 +295,7 @@ returned."
                 ((string-prefix-p "replay_gain_mode: " line)
                  (setf (alist-get 'replay-gain-mode mpdmacs--player-options)
                        (let ((value (substring line 18)))
-			 (cond
+			                   (cond
                           ((string= value "off") 'off)
                           ((string= value "track") 'track)
                           ((string= value "album") 'album)
@@ -302,21 +313,27 @@ subsystems will be listed in SUBSYS (a list of symbols)."
    (lambda (x)
      (cond
       ((or (eq x 'mixer) (eq x 'player))
-       (mpdmacs-log 'debug "idle event: player")
-       (mpdmacs--update-player-state))
+       (mpdmacs-log 'info "idle event: player/mixer")
+       (mpdmacs--update-player-state)
+       (mpdmacs--update-player-options))
       ((eq x 'stored)
-       (mpdmacs-log 'debug "idle event: stored_playlists")
+       (mpdmacs-log 'info "idle event: stored_playlists")
        (mpdmacs--update-stored-playlists))
       ((eq x 'options)
-       (mpdmacs-log 'debug "idle event: options")
+       (mpdmacs-log 'info "idle event: options")
        (mpdmacs--update-player-options))
+      ((eq x 'sticker)
+       ;; This package doesn't care about stickers; it just provides a
+       ;; hook for other packages that build on it.
+       (mpdmacs-log 'info "idle event: sticker")
+       (run-hooks 'mpdmacs-sticker-change-hook))
       (t
        (mpdmacs-log 'error (format "Unknown idle event %s" x)))))
    subsys))
 
-(defun mpdmacs-get-current-file ()
+(defun mpdmacs-get-current-song-file ()
   "Retrieve the file URI to the current track (may be nil)."
-  mpdmacs--current-file)
+  mpdmacs--current-song-file)
 
 ;;; Commands
 
@@ -338,8 +355,8 @@ subsystems will be listed in SUBSYS (a list of symbols)."
   "Send the current track to PLAYLIST."
   (interactive
    (list
-    (completing-read "Playlist: " mpdmacs--current-playlists)))
-  (let ((f (elmpd-get-current-file)))
+    (completing-read "Playlist: " mpdmacs--stored-playlists)))
+  (let ((f (mpdmacs-get-current-song-file)))
     (mpdmacs-send
      (format "playlistadd \"%s\" \"%s\"" playlist f)
      (lambda (_conn ok text)
@@ -387,17 +404,19 @@ subsystems will be listed in SUBSYS (a list of symbols)."
   (let ((curvol (alist-get 'volume mpdmacs--player-options)))
     (if (eq curvol 'unknown)
         (error "Can't increment the volume when the current volume is unknown")
-      (mpdmacs-send (format "setvol %d" (+ curvol inc))))))
+      (let ((vol (+ curvol inc)))
+        (mpdmacs-send (format "setvol %d" vol))
+        (message "Volume is now %d" vol)))))
 
 (defun mpdmacs-inc-volume (inc)
   "Increment the current volume by INC."
-  (interactive "P")
+  (interactive "p")
   (mpdmacs--modify-volume inc))
 
 (defun mpdmacs-dec-volume (dec)
   "Decrement the current volume by DEC."
-  (interactive "P")
-  (mpdmacs--modify-volume (- inc)))
+  (interactive "p")
+  (mpdmacs--modify-volume (- dec)))
 
 (defun mpdmacs-load-playlist (playlist)
   "Load PLAYLIST into the queue."
@@ -405,7 +424,6 @@ subsystems will be listed in SUBSYS (a list of symbols)."
    (list
     (completing-read "Playlist: " mpdmacs--stored-playlists nil 'confirm)))
   (mpdmacs-send (format "load \"%s\"" playlist)))
-
 
 (defmacro mpdmacs--def-player-opts-viewer (attr)
   "Define a function retrieving player option ATTR."
@@ -425,24 +443,87 @@ subsystems will be listed in SUBSYS (a list of symbols)."
 (mpdmacs--def-player-opts-viewer replay-gain-mode)
 (mpdmacs--def-player-opts-viewer volume)
 
-
 (defmacro mpdmacs--def-player-opts-toggle (attr)
   "Define a function toggling a player option ATTR."
   `(defun ,(intern (format "mpdmacs-toggle-%s" attr)) ()
      (interactive)
-     (let ((rnd (alist-get (quote ,attr) mpdmacs--player-options)))
-       (if (eq rnd 'unknown)
+     (let ((val (alist-get (quote ,attr) mpdmacs--player-options)))
+       (if (eq val 'unknown)
            (error ,(format "Can't toggle %s when the player is stopped" attr))
-         (mpdmacs-send (format ,(format "%s %%s" attr) (if rnd "0" "1"))
+         (mpdmacs-send (format ,(format "%s %%s" attr) (if val "0" "1"))
                        (lambda (_conn ok text)
                          (if ok
-                             (mpdmacs-log 'info ,(format "%s mode is %%s." attr) (if rnd "off" "on"))
-                           (mpdmacs-log 'error ,(format "Failed to turn %%s %s mode: %%s" attr)
-                                        (if rnd "off" "on") text))))))))
+                             (message ,(format "%s mode is %%s." attr) (if val "off" "on"))
+                           (mpdmacs-log 'error?,(format "Failed to turn %%s %s mode: %%s" attr)
+                                        (if val "off" "on") text))))))))
 
 (mpdmacs--def-player-opts-toggle repeat)
 (mpdmacs--def-player-opts-toggle random)
 (mpdmacs--def-player-opts-toggle consume)
+
+(defun mpdmacs-set-crossfade (arg)
+  "Set crossfading between songs to ARG, in seconds."
+  (interactive "NCrossfade (sec): ")
+  ;; We could validate ARG here, but I'd prefer to ask forgiveness
+  ;; than permission (i.e. let's just send the value on to MPD & let
+  ;; the server validte the argument, rather than do it here & perhaps
+  ;; get it wrong).
+  (mpdmacs-send
+   (format "crossfade %d" arg)
+   (lambda (_conn ok text)
+     (if ok
+         (message "Crossfade is now %d seconds." arg)
+       (mpdmacs-log 'error (format "Failed to set crossfade to %d: %s" arg text))))))
+
+(defun mpdmacs--single-to-string (x)
+  "Convert X to text."
+  (cond
+   ((not x) "0")
+   ((eq x 'oneshot) "oneshot")
+   (t "1")))
+
+(defun mpdmacs-rotate-single ()
+  "Rotate single mode from off to on to oneshot."
+  (interactive)
+  (let* ((curr (mpdmacs-get-single))
+         (single
+          (cond
+           ((eq curr 'oneshot) nil)
+           ((not curr) t)
+           (t 'oneshot))))
+    (mpdmacs-send
+     (format "single %s" (mpdmacs--single-to-string single))
+     (lambda (_conn ok text)
+       (if ok
+           (message "Single is now %s." single)
+         (mpdmacs-log 'error "Failed to set single to %s: %s" single text))))))
+
+(defun mpdmacs--replay-gain-mode-to-string (x)
+  "Convert X to text."
+  (cond
+   ((eq x 'off) "off")
+   ((eq x 'track) "track")
+   ((eq x 'album) "album")
+   ((eq x 'auto) "auto")
+   (t "unknown")))
+
+(defun mpdmacs-rotate-replay-gain ()
+  "Rotate replay gain mode among off, track, album & auto."
+  (interactive)
+  (let* ((curr (mpdmacs-get-replay-gain-mode))
+         (mode
+          (cond
+           ((eq curr 'off) 'track)
+           ((eq curr 'track) 'album)
+           ((eq curr 'album) 'auto)
+           ((eq curr 'auto) 'off)
+           (t (error "Current replay gain mode is unknown")))))
+    (mpdmacs-send
+     (format "replay_gain_mode %s" (mpdmacs--replay-gain-mode-to-string mode))
+     (lambda (_conn ok text)
+       (if ok
+           (message "Replay gain mode is now %s." mode)
+         (mpdmacs-log 'error "Failed to set replay gain mode to %s: %s" mode text))))))
 
 (defun mpdmacs-toggle-pause ()
   "Toggle the MPD server pause status.
@@ -452,6 +533,21 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
   (interactive)
   (mpdmacs-send "pause"))
 
+(defun mpdmacs-show-current-song ()
+  "Display information about the current song."
+
+  (interactive)
+  (mpdmacs-send
+   "currentsong"
+   (lambda (_conn ok text)
+     (if (not ok)
+         (error "Failed to retrieve current song: %s" text)
+       (with-current-buffer (get-buffer-create mpdmacs-current-song-buffer)
+         (goto-char (point-max))
+         (insert "--\n")
+         (insert text))
+       (run-hooks 'mpdmacs-show-current-song-hook)
+       (switch-to-buffer (get-buffer-create mpdmacs-current-song-buffer))))))
 
 (defvar mpdmacs-keymap (make-sparse-keymap)
   "Keymap for `mpdmacs' commands.")
@@ -470,6 +566,10 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
 (define-key mpdmacs-keymap "p"         #'mpdmacs-toggle-pause)
 (define-key mpdmacs-keymap "r"         #'mpdmacs-toggle-random)
 (define-key mpdmacs-keymap "R"         #'mpdmacs-toggle-consume)
+(define-key mpdmacs-keymap "."         #'mpdmacs-show-current-song)
+(define-key mpdmacs-keymap "X"         #'mpdmacs-set-crossfade)
+(define-key mpdmacs-keymap "y"         #'mpdmacs-rotate-single)
+(define-key mpdmacs-keymap "Y"         #'mpdmacs-rotate-replay-gain)
 
 ;;;###autoload
 (defun mpdmacs-enable ()
@@ -482,7 +582,7 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
     :host mpdmacs-host
     :port mpdmacs-port
     :local mpdmacs-socket
-    :subsystems '((player stored options mixer) . mpdmacs--watcher)))
+    :subsystems '((player stored options mixer sticker) . mpdmacs--watcher)))
   (mpdmacs--update-player-state)
   (mpdmacs--update-stored-playlists)
   (mpdmacs--update-player-options)
@@ -493,7 +593,8 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
   "Unload `mpdmacs'."
   (interactive)
   (if mpdmacs-unload-hook (run-hooks 'mpdmacs-unload-hook))
-  (delete-process (elmpd-connection--fd mpdmacs--connection))
+  (if mpdmacs--connection
+      (delete-process (elmpd-connection--fd mpdmacs--connection)))
   (setq mpdmacs--connection nil)
   (mpdmacs-log 'info "mpdmacs unloaded."))
 

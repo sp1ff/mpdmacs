@@ -1,3 +1,18 @@
+2020-10-06  Michael Herstine  <sp1ff@pobox.com>
+
+	Work in progress.
+	This commit includes quite a few accumulated changes:
+
+	    1. Adds 'mpdmacs-sticker-change-hook'
+	    2. Adds 'mpdmacs-show-current-song-hook'
+	    3. Fixed a bug in 'mpdmacs-send-to-playlist'
+	    4. Fixed a bug in 'mpdmacs-dec-volume'
+	    5. Added 'mpdmacs-set-crossfade'
+	    6. Added 'mpdmacs-rotate-single'
+	    7. Added 'mpdmacs-rotate-replay-gain'
+	    8. Added 'mdpmacs-show-current-song'
+	    9. Makes 'mpdmacs-unload' idempotent
+
 2020-10-01  Michael Herstine  <sp1ff@pobox.com>
 
 	Work in progress.

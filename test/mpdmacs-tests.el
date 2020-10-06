@@ -68,12 +68,12 @@ nextsong: 137
 nextsongid: 6615
 OK
 ")
-                 ("idle player stored_playlist options mixer\n" . "")
+                 ("idle player stored_playlist options mixer sticker\n" . "")
                  ("noidle\n" . "OK\n")
                  ("replay_gain_status\n" . "replay_gain_mode: off
 OK
 ")
-                 ("idle player stored_playlist options mixer\n" . "")))
+                 ("idle player stored_playlist options mixer sticker\n" . "")))
          (server
             (make-network-process
              :name "mpdmacs-test-updates"
