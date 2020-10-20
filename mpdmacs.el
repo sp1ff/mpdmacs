@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.1.3
+;; Version: 0.1.4
 ;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.1.3")
+(defconst mpdmacs-version "0.1.4")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."
@@ -119,6 +119,13 @@ unique."
   "Log FMT at level LEVEL & facility 'mpdmacs."
   (apply 'elmpd-log level 'mpdmacs fmt objects))
 
+(defvar mpdmacs--current-song-label nil
+  "Short string describing the current track (if any).
+
+Takes the form of ARTIST - TITLE.  Updated automatically
+whenever `mpdmacs--connection' is informed of a change in player
+state.")
+
 (defun mpdmacs--update-mode-line ()
   "Add the current track to the mode-line."
   (setq global-mode-string (list (if mpdmacs--current-song-label mpdmacs--current-song-label "N/A"))))
@@ -130,13 +137,6 @@ unique."
 
 `mpdmacs' will setup a long-lived connection to monitor updates
 on the server.")
-
-(defvar mpdmacs--current-song-label nil
-  "Short string describing the current track (if any).
-
-Takes the form of ARTIST - TITLE.  Updated automatically
-whenever `mpdmacs--connection' is informed of a change in player
-state.")
 
 (defvar mpdmacs--current-song-file nil
   "File corresponding to the current track (if any).
@@ -430,7 +430,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
   `(defun ,(intern (format "mpdmacs-get-%s" attr)) ()
      (interactive)
      (let ((val (alist-get (quote ,attr) mpdmacs--player-options)))
-       (if (called-interactively-p)
+       (if (called-interactively-p 'interactive)
            (message "%s: %s" (quote ,attr) val))
        val)))
 
