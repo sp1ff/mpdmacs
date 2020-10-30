@@ -1,4 +1,4 @@
-AC_INIT([mpdmacs], [0.1.4], [sp1ff@poboxcom], [mpdmacs], [https://github.com/sp1ff/mpdmacs])
+AC_INIT([mpdmacs], [0.1.5], [sp1ff@poboxcom], [mpdmacs], [https://github.com/sp1ff/mpdmacs])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([mpdmacs.el])
 AM_INIT_AUTOMAKE([-Wall -Werror gnits std-options dist-bzip2 dist-xz])

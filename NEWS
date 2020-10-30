@@ -1,5 +1,8 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
+* 0.1.5 build:
+
+Incorporated lints from MELPA submission.
 * 0.1.4 build:
 
 Final touch-up before pushing to Github (docs only).

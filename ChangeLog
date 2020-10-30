@@ -1,4 +1,15 @@
-2020-10-19  Michael Herstine  <sp1ff@pobox.com>
+2020-10-29  Michael Herstine  <sp1ff@pobox.com>
+
+	Incorporate feedback from @riscy at MELPA.
+	    1. Use #' in 'mpdmacs-log'
+
+	    2. Be careful to never overwrite existing bindings when
+	       setting up my keymap by making them in a let-binding
+	       within the defvar.
+
+2020-10-20  Michael Herstine  <sp1ff@pobox.com>
+
+	Adding LICENSE file.
 
 	Final touch-up before release.
 

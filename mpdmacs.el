@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.1.4
+;; Version: 0.1.5
 ;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.1.4")
+(defconst mpdmacs-version "0.1.5")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."
@@ -117,7 +117,7 @@ unique."
 ;; We'll re-use the elmpd logging feature, but with our own, dedicated facility.
 (defun mpdmacs-log (level fmt &rest objects)
   "Log FMT at level LEVEL & facility 'mpdmacs."
-  (apply 'elmpd-log level 'mpdmacs fmt objects))
+  (apply #'elmpd-log level 'mpdmacs fmt objects))
 
 (defvar mpdmacs--current-song-label nil
   "Short string describing the current track (if any).
@@ -549,27 +549,28 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
        (run-hooks 'mpdmacs-show-current-song-hook)
        (switch-to-buffer (get-buffer-create mpdmacs-current-song-buffer))))))
 
-(defvar mpdmacs-keymap (make-sparse-keymap)
+(defvar mpdmacs-keymap
+  (let  ((keymap (make-sparse-keymap)))
+    (define-key keymap "P"         #'mpdmacs-play)
+    (define-key keymap (kbd "DEL") #'mpdmacs-replay)
+    (define-key keymap "/"         #'mpdmacs-send-to-playlist)
+    (define-key keymap "s"         #'mpdmacs-stop)
+    (define-key keymap ">"         #'mpdmacs-next)
+    (define-key keymap "<"         #'mpdmacs-previous)
+    (define-key keymap "c"         #'mpdmacs-clear)
+    (define-key keymap "v"         #'mpdmacs-set-volume)
+    (define-key keymap "+"         #'mpdmacs-inc-volume)
+    (define-key keymap "-"         #'mpdmacs-dec-volume)
+    (define-key keymap "l"         #'mpdmacs-load-playlist)
+    (define-key keymap "p"         #'mpdmacs-toggle-pause)
+    (define-key keymap "r"         #'mpdmacs-toggle-random)
+    (define-key keymap "R"         #'mpdmacs-toggle-consume)
+    (define-key keymap "."         #'mpdmacs-show-current-song)
+    (define-key keymap "X"         #'mpdmacs-set-crossfade)
+    (define-key keymap "y"         #'mpdmacs-rotate-single)
+    (define-key keymap "Y"         #'mpdmacs-rotate-replay-gain)
+    keymap)
   "Keymap for `mpdmacs' commands.")
-
-(define-key mpdmacs-keymap "P"         #'mpdmacs-play)
-(define-key mpdmacs-keymap (kbd "DEL") #'mpdmacs-replay)
-(define-key mpdmacs-keymap "/"         #'mpdmacs-send-to-playlist)
-(define-key mpdmacs-keymap "s"         #'mpdmacs-stop)
-(define-key mpdmacs-keymap ">"         #'mpdmacs-next)
-(define-key mpdmacs-keymap "<"         #'mpdmacs-previous)
-(define-key mpdmacs-keymap "c"         #'mpdmacs-clear)
-(define-key mpdmacs-keymap "v"         #'mpdmacs-set-volume)
-(define-key mpdmacs-keymap "+"         #'mpdmacs-inc-volume)
-(define-key mpdmacs-keymap "-"         #'mpdmacs-dec-volume)
-(define-key mpdmacs-keymap "l"         #'mpdmacs-load-playlist)
-(define-key mpdmacs-keymap "p"         #'mpdmacs-toggle-pause)
-(define-key mpdmacs-keymap "r"         #'mpdmacs-toggle-random)
-(define-key mpdmacs-keymap "R"         #'mpdmacs-toggle-consume)
-(define-key mpdmacs-keymap "."         #'mpdmacs-show-current-song)
-(define-key mpdmacs-keymap "X"         #'mpdmacs-set-crossfade)
-(define-key mpdmacs-keymap "y"         #'mpdmacs-rotate-single)
-(define-key mpdmacs-keymap "Y"         #'mpdmacs-rotate-replay-gain)
 
 ;;;###autoload
 (defun mpdmacs-enable ()
