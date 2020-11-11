@@ -1,6 +1,6 @@
 #+TITLE: mpdmacs
 #+DESCRIPTION: A lightweight, ergonomic MPD client for Emacs
-#+DATE: <2020-10-29 Thu 19:01>
+#+DATE: <2020-11-11 Wed 13:57>
 #+AUTODATE: t
 #+AUTHOR: sp1ff
 #+EMAIL: <sp1ff@pobox.com>
@@ -8,7 +8,7 @@
 
 * Introduction
 
-[[https://github.com/sp1ff/mpdmacs][mpdmacs]] is a lightweight, ergonomic [[https://www.musicpd.org/][MPD]] client for Emacs.
+[[https://github.com/sp1ff/mpdmacs][mpdmacs-mode]] is a global minor-mode that turns Emacs into a lightweight, ergonomic [[https://www.musicpd.org/][MPD]] client.
 
 * Prerequisites
 
@@ -19,8 +19,8 @@ Emacs 25.1 & [[https://melpa.org/#/elmpd][elmpd]] latest.
 I plan on submitting this package to [[https://melpa.org][MELPA]] but for now, it's only available as a tarball. Perform the usual "configure/make/make install" incantations:
 
 #+BEGIN_SRC bash
-  curl -L -O https://github.com/mpdmacs/archive/0.1.5.tar.gz
-  tar xf mpdmacs-0.1.5.tar.gz && cd mpdmacs-0.1.5
+  curl -L -O https://github.com/mpdmacs/archive/2.0.0.tar.gz
+  tar xf mpdmacs-2.0.0.tar.gz && cd mpdmacs-2.0.0
   ./configure && make all check
   sudo make install
 #+END_SRC
@@ -30,23 +30,23 @@ I plan on submitting this package to [[https://melpa.org][MELPA]] but for now, i
 Pull in =mpdmacs= as usual via =require=: =(require 'mpdmacs)=. Configure =mpdmacs= to connect to your MPD server by customizing the variables:
 
   - =mpdmacs-host= & =mpdmacs-port=: If you're talking over a TCP socket, configure these two variables with the hostname and port number at which MPD is listening
-  - =mpd-socket=: If your MPD server is local & listening on a Unix socket, set this variable to its path. If you want to talk over a TCP socket, best to set this to nil (=elmpd-enable=, below, will try the local socket first, if it exists)
+  - =mpdmacs-socket=: If your MPD server is local & listening on a Unix socket, set this variable to its path. If you want to talk over a TCP socket, best to set this to nil (=mpdmacs-mode=, below, will try the local socket first, if it exists)
 
-At this point, =mpdmacs= has done nothing: you need to explicitly enable it by calling =(mpdmacs-enable)=. This will open a connection to your MPD server, begin monitoring its state for changes, and enable you to begin issuing commands.
+At this point, =mpdmacs= has done nothing: you need to explicitly enable it by calling =(mpdmacs-mode)=. This will open a connection to your MPD server, begin monitoring its state for changes, and enable you to begin issuing commands.
 
-=mpdmacs= supplies several interactive commands, with keybindings in =mpdmacs-keymap=; you may want to map a chord you find convenient to that keymap like so:
+=mpdmacs= supplies several interactive commands, with keybindings in =mpdmacs-mode-keymap=; you may want to map a chord you find convenient to that keymap like so:
 
 #+BEGIN_SRC elisp
   (defun my-mpdmacs-hook ()
-    (global-set-key "\C-c m" 'mpdmacs-keymap))
-  (add-hook 'mpdmacs-load-hook 'my-mpdmacs-hook)
+    (global-set-key "\C-c m" 'mpdmacs-mode-keymap))
+  (add-hook 'mpdmacs-mode-hook 'my-mpdmacs-hook)
 #+END_SRC
 
-If you ever want to turn =mpdmacs= off, you can invoke =(mpdmacs-unload)=.
+If you ever want to turn =mpdmacs= off, you can invoke =(mpdmacs-mode)= again.
 
 * Motivation & Philosophy
 
-There are already capable MPD clients out there such as [[https://gitea.petton.fr/mpdel/mpdel][mpdel]] & [[https://github.com/emacs-mirror/emacs/blob/master/lisp/mpc.el][mpc]] so why another? I've tried both & like them fine, but they're full-featured MPD clients. I hope that =mpdmacs= will fill a different role, that of an unobtrusive assistant that will assist you with your music while using Emacs for other things. If you want to, say, display & edit the current play queue, you would go to one of them. If you just want to skip to the next track with a quick key sequence while doing something else, use =elmpd=.
+There are already capable MPD clients out there such as [[https://gitea.petton.fr/mpdel/mpdel][mpdel]] & [[https://github.com/emacs-mirror/emacs/blob/master/lisp/mpc.el][mpc]] so why another? I've tried both & like them fine, but they're full-featured MPD clients. I hope that =mpdmacs= will fill a different role, that of an unobtrusive assistant that will assist you with your music while using Emacs for other things. If you want to, say, display & edit the current play queue, you would go to one of them. If you just want to skip to the next track with a quick key sequence while doing something else, use =mpdmacs=.
 
 * Learning More or Contributing
 

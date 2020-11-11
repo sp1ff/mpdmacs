@@ -1,3 +1,10 @@
+2020-11-11  Michael Herstine  <sp1ff@pobox.com>
+
+	Re-cast 'mpdmacs' as a minor-mode.
+	When submitting 'mpdmacs' to MELPA, @riscy noted that since 'mpdmacs'
+	is running hooks & defining a keymap, perhaps it would make more
+	sense to deliver it as a minor-mode, which I have done.
+
 2020-10-29  Michael Herstine  <sp1ff@pobox.com>
 
 	Incorporate feedback from @riscy at MELPA.
