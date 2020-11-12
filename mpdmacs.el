@@ -616,7 +616,7 @@ that will be invoked on assorted player events.
 disabled.
 
 Key bindings:
-\\{mpdmacs-mode-map}"
+\\{mpdmacs-mode-keymap}"
   :group 'mpdmacs
   :lighter " mpd"
   :keymap mpdmacs-mode-keymap
