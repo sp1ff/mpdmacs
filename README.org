@@ -1,6 +1,6 @@
 #+TITLE: mpdmacs
 #+DESCRIPTION: A lightweight, ergonomic MPD client for Emacs
-#+DATE: <2020-11-11 Wed 13:57>
+#+DATE: <2020-11-17 Tue 19:45>
 #+AUTODATE: t
 #+AUTHOR: sp1ff
 #+EMAIL: <sp1ff@pobox.com>
@@ -19,8 +19,8 @@ Emacs 25.1 & [[https://melpa.org/#/elmpd][elmpd]] latest.
 I plan on submitting this package to [[https://melpa.org][MELPA]] but for now, it's only available as a tarball. Perform the usual "configure/make/make install" incantations:
 
 #+BEGIN_SRC bash
-  curl -L -O https://github.com/mpdmacs/archive/2.0.0.tar.gz
-  tar xf mpdmacs-2.0.0.tar.gz && cd mpdmacs-2.0.0
+  curl -L -O https://github.com/mpdmacs/archive/0.2.1.tar.gz
+  tar xf mpdmacs-0.2.1.tar.gz && cd mpdmacs-0.2.1
   ./configure && make all check
   sudo make install
 #+END_SRC

@@ -1,3 +1,11 @@
+2020-11-17  Michael Herstine  <sp1ff@pobox.com>
+
+	A few minor updates in response to MELPA feedback from @riscy <https://github.com/melpa/melpa/pull/7190>.
+
+2020-11-12  Michael Herstine  <sp1ff@pobox.com>
+
+	Fixed typo in the 'mpdmacs-mode' docstring.
+
 2020-11-11  Michael Herstine  <sp1ff@pobox.com>
 
 	Re-cast 'mpdmacs' as a minor-mode.

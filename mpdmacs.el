@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.2.0")
+(defconst mpdmacs-version "0.2.1")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."
@@ -79,8 +79,8 @@
 
 Like many minor-modes, `mpdmacs' defines a keymap that is
 activated when the mode is turned on.  Use this custom variable
-to choose the prefix key (e.g. if this is set to \"C-c m\" then
-`mpdmacs-play' will be bound to \"C-c m P\").")
+to choose the prefix key chord."
+  :type 'string)
 
 (defcustom mpdmacs-connection-name "mpdmacs"
   "Default connection name.
@@ -174,6 +174,67 @@ of a change in the stored playlists.")
 
 Updated automatically by `mpdmacs--connection' when it is
 informed of any change on the server side.")
+
+(defvar mpdmacs-mode-keymap
+  (let  ((keymap (make-sparse-keymap)))
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "P"))   #'mpdmacs-play)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "DEL")) #'mpdmacs-replay)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "/"))   #'mpdmacs-send-to-playlist)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "s"))   #'mpdmacs-stop)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " ">"))   #'mpdmacs-next)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "<"))   #'mpdmacs-previous)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "c"))   #'mpdmacs-clear)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "v"))   #'mpdmacs-set-volume)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "+"))   #'mpdmacs-inc-volume)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "-"))   #'mpdmacs-dec-volume)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "l"))   #'mpdmacs-load-playlist)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "p"))   #'mpdmacs-toggle-pause)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "r"))   #'mpdmacs-toggle-random)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "R"))   #'mpdmacs-toggle-consume)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "."))   #'mpdmacs-show-current-song)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "X"))   #'mpdmacs-set-crossfade)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "y"))   #'mpdmacs-rotate-single)
+    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "Y"))   #'mpdmacs-rotate-replay-gain)
+    keymap)
+  "Keymap for `mpdmacs-mode' commands.")
+
+;;;###autoload
+(define-minor-mode mpdmacs-mode
+  "Global minor mode enabling a minimal MPD client.
+
+When mpdmacs-mode is enabled, Emacs becomes a lightweight MPD
+client. Basic playback and playback options (random, consume &c)
+are all available, and extensions are supported through hooks
+that will be invoked on assorted player events.
+
+`mpdmacs-mode-hook' is run whenever `mpdmacs-mode' is enabled or
+disabled.
+
+Key bindings:
+\\{mpdmacs-mode-keymap}"
+  :group 'mpdmacs
+  :lighter " mpd"
+  :keymap mpdmacs-mode-keymap
+  :global t
+  :init-value nil
+  (if mpdmacs-mode
+      (progn
+        (setq
+         mpdmacs--connection
+         (elmpd-connect
+          :name mpdmacs-connection-name
+          :host mpdmacs-host
+          :port mpdmacs-port
+          :local mpdmacs-socket
+          :subsystems '((player stored options mixer sticker) . mpdmacs--watcher)))
+        (mpdmacs--update-player-state)
+        (mpdmacs--update-stored-playlists)
+        (mpdmacs--update-player-options)
+        (mpdmacs-log 'info "mpdmacs-mode enabled."))
+    (if mpdmacs--connection
+        (delete-process (elmpd-connection--fd mpdmacs--connection)))
+    (setq mpdmacs--connection nil)
+    (mpdmacs-log 'info "mpdmacs unloaded.")))
 
 (defun mpdmacs--update-player-state ()
   "Update `mpdmacs--current-song-label' & `mpdmacs--current-file'."
@@ -424,7 +485,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
   "Change the MPD server volume by INC."
   (let ((curvol (alist-get 'volume mpdmacs--player-options)))
     (if (eq curvol 'unknown)
-        (error "Can't increment the volume when the current volume is unknown")
+        (user-error "Can't increment the volume when the current volume is unknown")
       (let ((vol (+ curvol inc)))
         (mpdmacs-send (format "setvol %d" vol))
         (message "Volume is now %d" vol)))))
@@ -475,7 +536,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
      (when mpdmacs-mode
        (let ((val (alist-get (quote ,attr) mpdmacs--player-options)))
          (if (eq val 'unknown)
-             (error ,(format "Can't toggle %s when the player is stopped" attr))
+             (user-error ,(format "Can't toggle %s when the player is stopped" attr))
            (mpdmacs-send (format ,(format "%s %%s" attr) (if val "0" "1"))
                          (lambda (_conn ok text)
                            (if ok
@@ -546,7 +607,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
              ((eq curr 'track) 'album)
              ((eq curr 'album) 'auto)
              ((eq curr 'auto) 'off)
-             (t (error "Current replay gain mode is unknown")))))
+             (t (user-error "Current replay gain mode is unknown")))))
       (mpdmacs-send
        (format "replay_gain_mode %s" (mpdmacs--replay-gain-mode-to-string mode))
        (lambda (_conn ok text)
@@ -579,67 +640,6 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
            (insert text))
          (run-hooks 'mpdmacs-show-current-song-hook)
          (switch-to-buffer (get-buffer-create mpdmacs-current-song-buffer)))))))
-
-(defvar mpdmacs-mode-keymap
-  (let  ((keymap (make-sparse-keymap)))
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "P"))   #'mpdmacs-play)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "DEL")) #'mpdmacs-replay)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "/"))   #'mpdmacs-send-to-playlist)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "s"))   #'mpdmacs-stop)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " ">"))   #'mpdmacs-next)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "<"))   #'mpdmacs-previous)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "c"))   #'mpdmacs-clear)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "v"))   #'mpdmacs-set-volume)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "+"))   #'mpdmacs-inc-volume)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "-"))   #'mpdmacs-dec-volume)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "l"))   #'mpdmacs-load-playlist)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "p"))   #'mpdmacs-toggle-pause)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "r"))   #'mpdmacs-toggle-random)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "R"))   #'mpdmacs-toggle-consume)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "."))   #'mpdmacs-show-current-song)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "X"))   #'mpdmacs-set-crossfade)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "y"))   #'mpdmacs-rotate-single)
-    (define-key keymap (kbd (concat mpdmacs-prefix-keys " " "Y"))   #'mpdmacs-rotate-replay-gain)
-    keymap)
-  "Keymap for `mpdmacs-mode' commands.")
-
-;;;###autoload
-(define-minor-mode mpdmacs-mode
-  "Global minor mode enabling a minimal MPD client.
-
-When mpdmacs-mode is enabled, Emacs becomes a lightweight MPD
-client. Basic playback and playback options (random, consume &c)
-are all available, and extensions are supported through hooks
-that will be invoked on assorted player events.
-
-`mpdmacs-mode-hook' is run whenever `mpdmacs-mode' is enabled or
-disabled.
-
-Key bindings:
-\\{mpdmacs-mode-keymap}"
-  :group 'mpdmacs
-  :lighter " mpd"
-  :keymap mpdmacs-mode-keymap
-  :global t
-  :init-value nil
-  (if mpdmacs-mode
-      (progn
-        (setq
-         mpdmacs--connection
-         (elmpd-connect
-          :name mpdmacs-connection-name
-          :host mpdmacs-host
-          :port mpdmacs-port
-          :local mpdmacs-socket
-          :subsystems '((player stored options mixer sticker) . mpdmacs--watcher)))
-        (mpdmacs--update-player-state)
-        (mpdmacs--update-stored-playlists)
-        (mpdmacs--update-player-options)
-        (mpdmacs-log 'info "mpdmacs-mode enabled."))
-    (if mpdmacs--connection
-        (delete-process (elmpd-connection--fd mpdmacs--connection)))
-    (setq mpdmacs--connection nil)
-    (mpdmacs-log 'info "mpdmacs unloaded.")))
 
 (provide 'mpdmacs)
 

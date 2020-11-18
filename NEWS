@@ -1,5 +1,8 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
+* 0.2.1 build:
+
+Incorporated more lints from MELPA submission.
 * 0.2.0 build:
 
 ** User-visible changes
