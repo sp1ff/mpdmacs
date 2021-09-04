@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.2.1
+;; Version: 0.2.2
 ;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.2.1")
+(defconst mpdmacs-version "0.2.2")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."
@@ -203,7 +203,7 @@ informed of any change on the server side.")
   "Global minor mode enabling a minimal MPD client.
 
 When mpdmacs-mode is enabled, Emacs becomes a lightweight MPD
-client. Basic playback and playback options (random, consume &c)
+client.  Basic playback and playback options (random, consume &c)
 are all available, and extensions are supported through hooks
 that will be invoked on assorted player events.
 
@@ -624,6 +624,15 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
   (when mpdmacs-mode
     (mpdmacs-send "pause")))
 
+(defun mpdmacs-current-song-buffer ()
+  "Return the `mpdmacs' current song buffer, creating it if need be."
+  (let ((buffer (get-buffer mpdmacs-current-song-buffer)))
+    (if buffer
+        buffer
+      (with-current-buffer (generate-new-buffer mpdmacs-current-song-buffer)
+        (special-mode)
+        (current-buffer)))))
+
 (defun mpdmacs-show-current-song ()
   "Display information about the current song."
 
@@ -634,12 +643,13 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
      (lambda (_conn ok text)
        (if (not ok)
            (error "Failed to retrieve current song: %s" text)
-         (with-current-buffer (get-buffer-create mpdmacs-current-song-buffer)
-           (goto-char (point-max))
-           (insert "--\n")
-           (insert text))
-         (run-hooks 'mpdmacs-show-current-song-hook)
-         (switch-to-buffer (get-buffer-create mpdmacs-current-song-buffer)))))))
+         (let ((inhibit-read-only t))
+           (with-current-buffer (mpdmacs-current-song-buffer)
+             (goto-char (point-max))
+             (insert (concat (propertize (make-string 70 ?~) 'face 'all-the-icons-pink) "\n"))
+             (insert text)
+             (run-hooks 'mpdmacs-show-current-song-hook)
+             (switch-to-buffer (mpdmacs-current-song-buffer)))))))))
 
 (provide 'mpdmacs)
 

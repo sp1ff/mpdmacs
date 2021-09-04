@@ -1,3 +1,7 @@
+2021-09-03  Michael Herstine  <sp1ff@pobox.com>
+
+	Minor tweak to current-song logic
+
 2020-11-17  Michael Herstine  <sp1ff@pobox.com>
 
 	A few minor updates in response to MELPA feedback from @riscy <https://github.com/melpa/melpa/pull/7190>.

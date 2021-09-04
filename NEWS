@@ -1,5 +1,10 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
+* 0.2.2 build:
+
+** User-visible changes
+
+*** Minor fontifying of the current-song buffer
 * 0.2.1 build:
 
 Incorporated more lints from MELPA submission.
