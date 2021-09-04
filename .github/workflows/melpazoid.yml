@@ -22,5 +22,5 @@ jobs:
         pip install ~/melpazoid
     - name: Run
       env:
-        RECIPE: (elmpd :repo "sp1ff/mpdmacs :fetcher github)
+        RECIPE: (elmpd :repo "sp1ff/mpdmacs" :fetcher github)
       run: echo $GITHUB_REF && make -C ~/melpazoid
