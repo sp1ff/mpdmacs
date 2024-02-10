@@ -4,7 +4,7 @@
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
 ;; Version: 0.2.2
-;; Package-Requires: ((emacs "25.1") (elmpd "0.1"))
+;; Package-Requires: ((emacs "29.1") (elmpd "0.2"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
 
@@ -128,7 +128,7 @@ unique."
 
 ;; We'll re-use the elmpd logging feature, but with our own, dedicated facility.
 (defun mpdmacs-log (level fmt &rest objects)
-  "Log FMT at level LEVEL & facility 'mpdmacs."
+  "Log FMT at level LEVEL & facility \='mpdmacs."
   (apply #'elmpd-log level 'mpdmacs fmt objects))
 
 (defvar mpdmacs--current-song-label nil
@@ -228,7 +228,7 @@ Key bindings:
           :local mpdmacs-socket
           :subsystems '((player stored options mixer sticker) . mpdmacs--watcher)))
         (mpdmacs--update-player-state)
-        (mpdmacs--update-stored-playlists)
+        (mpdmacs--update-stored-playlists-and-reverse-index)
         (mpdmacs--update-player-options)
         (mpdmacs-log 'info "mpdmacs-mode enabled."))
     (if mpdmacs--connection
@@ -268,8 +268,16 @@ Key bindings:
      (if mpdmacs-mode-line-update-function (funcall mpdmacs-mode-line-update-function))
      (if mpdmacs-player-state-changed-hook (run-hooks 'mpdmacs-player-state-changed-hook)))))
 
-(defun mpdmacs--update-stored-playlists ()
-  "Update `mpdmacs--stored-playlists'."
+(defvar mpdmacs--playlist-reverse-index (make-hash-table :test 'equal)
+  "Index from tracks to playlists.")
+
+(defun mpdmacs--update-stored-playlists-and-reverse-index ()
+  "Update `mpdmacs--stored-playlits.
+
+Also update the reverse index of track to playlist."
+
+  (clrhash mpdmacs--playlist-reverse-index)
+  ;; Start by doing a "listplaylists" to get the list of stored playlists.
   (elmpd-send
    mpdmacs--connection
    "listplaylists"
@@ -280,7 +288,27 @@ Key bindings:
         mpdmacs--stored-playlists
         (sort
          (cl-mapcar
-          (lambda (x) (substring x 10))
+          (lambda (x)
+            (let ((playlist (substring x 10)))
+              ;; We've got a playlist-- now list the songs to update the reverse index...
+              (elmpd-send
+               mpdmacs--connection
+               (format "listplaylist %s" playlist)
+               (lambda (_conn ok text)
+                 (if (not ok)
+                     (mpdmacs-log 'error "Failed to list playlist %s" playlist)
+                   (cl-mapcar
+                    (lambda (x)
+                      (let* ((track (substring x 6))
+                             (playlists (gethash track mpdmacs--playlist-reverse-index)))
+                        (unless (member playlists playlists)
+                          (setq playlists (cons playlist playlists))
+                          (puthash track playlists mpdmacs--playlist-reverse-index))))
+                    (cl-remove-if-not
+                     (lambda (x) (string-prefix-p "file: " x))
+                     (string-split text "\n" t))))))
+              ;; be sure to return the playlist name here!
+              playlist))
           (cl-remove-if-not
            (lambda (x) (string-prefix-p "playlist: " x))
            (split-string text "\n" t)))
@@ -292,7 +320,7 @@ Key bindings:
 MPD maintains assorted values defined to be boolean in nature.
 This is a convenience function for mapping the wire value (text
 in the case of MPD) to LISP symbols.  If TEXT cannot be
-interpreted as per the MPD protocol, the symbol 'unknown will be
+interpreted as per the MPD protocol, the symbol \='unknown will be
 returned."
 
   (cond
@@ -391,7 +419,7 @@ subsystems will be listed in SUBSYS (a list of symbols)."
        (mpdmacs--update-player-options))
       ((eq x 'stored)
        (mpdmacs-log 'info "idle event: stored_playlists")
-       (mpdmacs--update-stored-playlists))
+       (mpdmacs--update-stored-playlists-and-reverse-index))
       ((eq x 'options)
        (mpdmacs-log 'info "idle event: options")
        (mpdmacs--update-player-options))
@@ -635,7 +663,6 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
 
 (defun mpdmacs-show-current-song ()
   "Display information about the current song."
-
   (interactive)
   (when mpdmacs-mode
     (mpdmacs-send
@@ -646,8 +673,17 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
          (let ((inhibit-read-only t))
            (with-current-buffer (mpdmacs-current-song-buffer)
              (goto-char (point-max))
-             (insert (concat (propertize (make-string 70 ?~) 'face 'all-the-icons-pink) "\n"))
+             (insert (propertize (make-string 70 ?━) 'face 'all-the-icons-pink) "\n")
              (insert text)
+	           (let ((playlists (gethash mpdmacs--current-song-file
+                                       mpdmacs--playlist-reverse-index)))
+	             (if playlists
+		               (progn
+		                 (insert "This track is part of the following stored playlists:\n")
+		                 (while playlists
+		                   (insert "    " (car playlists) "\n")
+		                   (setq playlists (cdr playlists))))
+		             (insert "This track is not a part of any stored playlist.\n")))
              (run-hooks 'mpdmacs-show-current-song-hook)
              (switch-to-buffer (mpdmacs-current-song-buffer)))))))))
 

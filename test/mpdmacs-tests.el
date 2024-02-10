@@ -68,6 +68,11 @@ nextsong: 137
 nextsongid: 6615
 OK
 ")
+                 ("listplaylist foo\n" . "file: music/bar.mp3
+file: music/splat.mp3
+OK")
+                 ("listplaylist saturday-afternoons-in-santa-cruz\n" . "file: music/a.mp3
+OK")
                  (idle "player" "stored_playlist" "options" "mixer" "sticker")
                  ("noidle\n" . "OK\n")
                  ("replay_gain_status\n" . "replay_gain_mode: off
