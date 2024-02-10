@@ -1,10 +1,14 @@
 #+TITLE: mpdmacs
 #+DESCRIPTION: A lightweight, ergonomic MPD client for Emacs
-#+DATE: <2021-09-03 Fri 17:27>
+#+DATE: <2024-02-10 Sat 07:20>
 #+AUTODATE: t
 #+AUTHOR: sp1ff
 #+EMAIL: <sp1ff@pobox.com>
 #+OPTIONS: toc:nil org-md-headline-style:setext *:t ^:nil
+
+[[https://melpa.org/#/mpdmacs][file:https://melpa.org/packages/mpdmacs-badge.svg]]
+[[https://stable.melpa.org/#/mpdmacs][file:https://stable.melpa.org/packages/mpdmacs-badge.svg]]
+[[https://github.com/sp1ff/mpdmacs/workflows/melpazoid/badge.svg][file:https://github.com/sp1ff/mpdmacs/workflows/melpazoid/badge.svg]]
 
 * Introduction
 
@@ -12,15 +16,15 @@
 
 * Prerequisites
 
-Emacs 25.1 & [[https://melpa.org/#/elmpd][elmpd]] latest.
+Emacs 29.1 & [[https://melpa.org/#/elmpd][elmpd]] latest.
 
 * Installing
 
-I plan on submitting this package to [[https://melpa.org][MELPA]] but for now, it's only available as a tarball. Perform the usual "configure/make/make install" incantations:
+This is available on [[https://melpa.org][MELPA]] as well as Autotools source tarballs:
 
 #+BEGIN_SRC bash
-  curl -L -O https://github.com/mpdmacs/archive/0.2.2.tar.gz
-  tar xf mpdmacs-0.2.2.tar.gz && cd mpdmacs-0.2.2
+  curl -L -O https://github.com/mpdmacs/archive/0.3.0.tar.gz
+  tar xf mpdmacs-0.3.0.tar.gz && cd mpdmacs-0.3.0
   ./configure && make all check
   sudo make install
 #+END_SRC
@@ -46,7 +50,7 @@ If you ever want to turn =mpdmacs= off, you can invoke =(mpdmacs-mode)= again.
 
 * Motivation & Philosophy
 
-There are already capable MPD clients out there such as [[https://gitea.petton.fr/mpdel/mpdel][mpdel]] & [[https://github.com/emacs-mirror/emacs/blob/master/lisp/mpc.el][mpc]] so why another? I've tried both & like them fine, but they're full-featured MPD clients. I hope that =mpdmacs= will fill a different role, that of an unobtrusive assistant that will assist you with your music while using Emacs for other things. If you want to, say, display & edit the current play queue, you would go to one of them. If you just want to skip to the next track with a quick key sequence while doing something else, use =mpdmacs=.
+There are already capable MPD clients out there such as [[https://gitea.petton.fr/mpdel/mpdel][mpdel]] & [[https://github.com/emacs-mirror/emacs/blob/master/lisp/mpc.el][mpc]] so why another? I've tried both & like them fine, but they're full-featured MPD clients. I hope that =mpdmacs= will fill a different role, that of an unobtrusive assistant while you're using Emacs for other things. If you want to, say, display & edit the current play queue, you would go to one of them. If you just want to skip to the next track with a quick key sequence while doing something else, use =mpdmacs=.
 
 * Learning More or Contributing
 
@@ -54,4 +58,4 @@ At the time of this writing, =mpdmacs.el= consists of a few hundred lines of cod
 
 * Status & Roadmap
 
-Basic playback functionality is there, but that's pretty much it except for a few other little features like adding the current song to the mode line.. I plan on adding support for searching & filtering next.
+Basic playback functionality is there, but that's pretty much it except for a few other little features like adding the current song to the mode line.

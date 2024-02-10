@@ -1,9 +1,9 @@
 ;;; mpdmacs.el --- A lightweight MPD client  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020 Michael Herstine <sp1ff@pobox.com>
+;; Copyright (C) 2020-2024 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.2.2
+;; Version: 0.3.0
 ;; Package-Requires: ((emacs "29.1") (elmpd "0.2"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.2.2")
+(defconst mpdmacs-version "0.3.0")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."

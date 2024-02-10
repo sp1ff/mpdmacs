@@ -1,3 +1,34 @@
+2024-02-10  Michael Herstine  <sp1ff@pobox.com>
+
+	Prepare the branch for merging.
+	Update the version to 0.3.0, update README & NEWS, and so forth.
+
+2024-02-10  Michael Herstine  <sp1ff@pobox.com>
+
+	Add a reverse index from song to playlists in which that song is included.
+	This patch augments `mpdmacs-show-current-song` so as to display
+	the playlists in which the current track is included. This requires
+	building up a reverse index from song to playlists, which is done
+	every time the current song changes.
+
+	This patch also cleans-up some miscellanea:
+
+	    - clean-up the release workflow
+	    - remove all the byte-compilation warnings
+	    - update the manual tests to point to localhost rather than .6
+	    - update the Github workflow to Python 3.10
+	    - address a few nits
+
+2021-09-04  Michael Herstine  <sp1ff@pobox.com>
+
+	adding .zstd distro
+
+	fixing workflows
+
+	correct typo in melpazoid.yml
+
+	Adding workflows
+
 2021-09-03  Michael Herstine  <sp1ff@pobox.com>
 
 	Minor tweak to current-song logic

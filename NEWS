@@ -1,5 +1,10 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
+* 0.3.0 build
+
+** User-visible changes
+
+*** `mpdmacs-show-current-song` now lists playlists in which the song is included
 * 0.2.2 build:
 
 ** User-visible changes
