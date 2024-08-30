@@ -1,32 +1,44 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
-* 0.3.0 build
+* 0.4
 
-** User-visible changes
+** 0.4.0
 
-*** `mpdmacs-show-current-song` now lists playlists in which the song is included
-* 0.2.2 build:
+*** User-visible changes
 
-** User-visible changes
+**** Introduced two new functions `mpdmacs-connection-status' & `mpdmacs-connection-failed-p'
+* 0.3
 
-*** Minor fontifying of the current-song buffer
-* 0.2.1 build:
+** 0.3.0
+
+*** User-visible changes
+
+**** `mpdmacs-show-current-song` now lists playlists in which the song is included
+* 0.2
+** 0.2.2
+
+*** User-visible changes
+
+**** Minor fontifying of the current-song buffer
+** 0.2.1
 
 Incorporated more lints from MELPA submission.
-* 0.2.0 build:
+** 0.2.0
 
-** User-visible changes
+*** User-visible changes
 
 Now exposed as a minor mode.
-* 0.1.5 build:
+* 0.1
+
+** 0.1.5
 
 Incorporated lints from MELPA submission.
-* 0.1.4 build:
+** 0.1.4
 
 Final touch-up before pushing to Github (docs only).
-* 0.1.3 build:
+** 0.1.3
 
-** User-visible changes
+*** User-visible changes
 
   - Adds 'mpdmacs-sticker-change-hook'
   - Adds 'mpdmacs-show-current-song-hook'
@@ -35,17 +47,17 @@ Final touch-up before pushing to Github (docs only).
   - Added 'mpdmacs-rotate-replay-gain'
   - Added 'mdpmacs-show-current-song'
   - Makes 'mpdmacs-unload' idempotent
-** Bugfixes
+*** Bugfixes
 
   - Fixed a bug in 'mpdmacs-send-to-playlist'
   - Fixed a bug in 'mpdmacs-dec-volume'
-* 0.1.2 build:
+** 0.1.2
 
 Numerous breaking changes.
-* 0.1.1 build:
+** 0.1.1
 
 Numerous breaking changes.
-* 0.1.0 build:
+** 0.1.0
 
 Initial commit of `mpdmacs'!
 

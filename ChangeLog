@@ -1,3 +1,11 @@
+2024-08-30  Michael Herstine  <sp1ff@pobox.com>
+
+	Cutting release 0.4.0
+
+	Introduce two new functions `mpdmacs-connection-status' & `mpdmacs-connection-failed-p'.
+	Also, introduce a small collection of scripts for validating
+	commits.
+
 2024-02-10  Michael Herstine  <sp1ff@pobox.com>
 
 	Prepare the branch for merging.
