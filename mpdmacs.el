@@ -4,7 +4,7 @@
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
 ;; Version: 0.3.0
-;; Package-Requires: ((emacs "29.1") (elmpd "0.2"))
+;; Package-Requires: ((emacs "29.1") (elmpd "0.3"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
 
@@ -437,6 +437,14 @@ subsystems will be listed in SUBSYS (a list of symbols)."
   mpdmacs--current-song-file)
 
 ;;; Commands
+
+(defun mpdmacs-connection-status ()
+  "Return the process status for the mpdmacs MPD connection."
+  (elmpd-conn-status mpdmacs--connection))
+
+(defun mpdmacs-connection-failed-p ()
+  "Return t if the mpdmacs connection failed, nil else."
+  (elmpd-conn-failed-p mpdmacs--connection))
 
 (defun mpdmacs-send (command &optional callback)
   "Send an arbitrary COMMAND with CALLBACK over the mpdmacs connection."

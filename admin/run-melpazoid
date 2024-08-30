@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Run melpazoid against mpdmacs. This script is designed to be run exclusively
+# locally.
+
+set -ex
+
+cd ${HOME}/code/projects/melpazoid
+git pull
+PATH=/opt/emacsen/current/bin:$PATH \
+RECIPE='(mpdmacs :repo "sp1ff/mpdmacs" :fetcher github :files ("*.el" (:exclude "mpdmacs-pkg.el" ".dir-locals.el" "*-tests.el")))' \
+LOCAL_REPO="${HOME}/code/projects/mpdmacs" \
+python3 melpazoid/melpazoid.py

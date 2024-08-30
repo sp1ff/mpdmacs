@@ -7,3 +7,7 @@ build-aux
 config.*
 configure
 *.elc
+*.bz2
+*.gz
+*.xz
+*.zst
