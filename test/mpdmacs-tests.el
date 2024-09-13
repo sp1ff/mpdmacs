@@ -24,6 +24,8 @@
 (require 'cl-lib)
 (require 'ert)
 
+(require 'mpdmacs)
+
 (ert-deftest mpdmacs-test-smoke-test ()
   "Smoke test--load `mpdmacs' & check that no connection is made &c."
 

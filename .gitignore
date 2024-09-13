@@ -9,5 +9,6 @@ configure
 *.elc
 *.bz2
 *.gz
+*.tar
 *.xz
 *.zst
