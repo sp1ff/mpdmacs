@@ -1,3 +1,20 @@
+2024-09-13  Michael Herstine  <sp1ff@pobox.com>
+
+	Cut release 0.4.1
+
+	Move from nested calls to `elmpd-send' to `elmpd-chain'.
+
+2024-09-13  Michael Herstine  <sp1ff@pobox.com>
+
+	Cleanup the project.
+	This patch carries out a few hygienic tasks:
+
+	    - add a CI workflow replicating the `signoff` script
+	    - remove the bzip tarball from the distributions
+	    - add an Emacs package build product
+	    - update .gitignore & fix CI
+	    - cleanup assorted warnings
+
 2024-08-30  Michael Herstine  <sp1ff@pobox.com>
 
 	Cutting release 0.4.0
