@@ -1,17 +1,18 @@
 #+TITLE: mpdmacs
 #+DESCRIPTION: A lightweight, ergonomic MPD client for Emacs
-#+DATE: <2024-08-30 Fri 10:55>
+#+DATE: <2024-09-13 Fri 17:48>
 #+AUTODATE: t
 #+AUTHOR: sp1ff
 #+EMAIL: <sp1ff@pobox.com>
-#+OPTIONS: num:nil ^:{}
+#+OPTIONS: toc:nil org-md-headline-style:setext *:t num:nil ^:{}
 #+LATEX_HEADER: \usepackage{float}
 #+LATEX_HEADER: \usepackage{amsthm}
-#+OPTIONS: toc:nil org-md-headline-style:setext *:t ^:nil
+#+STARTUP: overview
 
 [[https://melpa.org/#/mpdmacs][file:https://melpa.org/packages/mpdmacs-badge.svg]]
 [[https://stable.melpa.org/#/mpdmacs][file:https://stable.melpa.org/packages/mpdmacs-badge.svg]]
 [[https://github.com/sp1ff/mpdmacs/workflows/melpazoid/badge.svg][file:https://github.com/sp1ff/mpdmacs/workflows/melpazoid/badge.svg]]
+
 
 * Introduction
 
@@ -24,8 +25,8 @@ Emacs 29.1 & [[https://melpa.org/#/elmpd][elmpd]] latest.
 This is available on [[https://melpa.org][MELPA]] as well as Autotools source tarballs:
 
 #+BEGIN_SRC bash
-  curl -L -O https://github.com/mpdmacs/archive/0.4.0.tar.gz
-  tar xf mpdmacs-0.4.0.tar.gz && cd mpdmacs-0.4.0
+  curl -L -O https://github.com/mpdmacs/archive/0.4.1.tar.gz
+  tar xf mpdmacs-0.4.1.tar.gz && cd mpdmacs-0.4.1
   ./configure && make all check
   sudo make install
 #+END_SRC

@@ -1,20 +1,23 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
-* 0.4
+* 0.4 builds
 
+** 0.4.1
+
+No user-visible changes; this was strictly a hygienic release.
 ** 0.4.0
 
 *** User-visible changes
 
 **** Introduced two new functions `mpdmacs-connection-status' & `mpdmacs-connection-failed-p'
-* 0.3
+* 0.3 builds
 
 ** 0.3.0
 
 *** User-visible changes
 
 **** `mpdmacs-show-current-song` now lists playlists in which the song is included
-* 0.2
+* 0.2 builds
 ** 0.2.2
 
 *** User-visible changes
@@ -28,7 +31,7 @@ Incorporated more lints from MELPA submission.
 *** User-visible changes
 
 Now exposed as a minor mode.
-* 0.1
+* 0.1 builds
 
 ** 0.1.5
 
