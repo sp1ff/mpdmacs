@@ -336,73 +336,74 @@ returned."
 
 (defun mpdmacs--update-player-options ()
   "Updated `mpdmacs--player-options'."
-  (elmpd-send
+  (elmpd-chain
    mpdmacs--connection
-   "status"
-   (lambda (_conn ok text)
-     (if (not ok)
-         ;; Set all options to 'unknown?
-         (mpdmacs-log 'error "Failed to get player status: %s" text)
-       (cl-mapc
-        (lambda (line)
-          (cond
-           ((string-prefix-p "repeat: " line)
-            (setf (alist-get 'repeat mpdmacs--player-options) (mpdmacs--intern-boolean-value (substring line 8))))
-           ((string-prefix-p "random: " line)
-            (setf (alist-get 'random mpdmacs--player-options) (mpdmacs--intern-boolean-value (substring line 8))))
-           ((string-prefix-p "single: " line)
-            (setf (alist-get 'single mpdmacs--player-options)
-                  (let ((value (substring line 8)))
-                    (cond
-                     ((string= value "0") nil)
-                     ((string= value "1") t)
-                     ((string= value "oneshot") 'oneshot)
-                     (t 'unknown)))))
-           ((string-prefix-p "consume: " line)
-            (setf (alist-get 'consume mpdmacs--player-options) (mpdmacs--intern-boolean-value (substring line 9))))
-           ((string-prefix-p "state: " line)
-            (setf (alist-get 'state mpdmacs--player-options)
-                  (let ((value (substring line 7)))
-                    (cond
-                     ((string= "play" value) 'play)
-                     ((string= "stop" value) 'stop)
-                     ((string= "pause" value) 'pause)
-                     (t 'unknown)))))
-           ((string-prefix-p "xfade: " line)
-            (setf
-             (alist-get 'crossfade mpdmacs--player-options)
-             (mpdmacs--intern-number (substring line 7))))
-           ((string-prefix-p "volume: " line)
-            (setf
-             (alist-get 'volume mpdmacs--player-options)
-             (mpdmacs--intern-number (substring line 8))))))
-        (split-string text "\n" t))
-       ;; replay gain status isn't included in the output of the
-       ;; "status" command, so we have to go back to the server for
-       ;; that:
-       (elmpd-send
-        mpdmacs--connection
-        "replay_gain_status"
-        (lambda (_conn ok text)
-          ;; We expect a single line (of the form "replay_gain_mode:
-          ;; XXX", but just in case the protocol changes out from
-          ;; under us, be ready to process multiple lines.
-          (if (not ok)
-              ;; Set this option to 'unknown?
-              (mpdmacs-log 'error "Failed to get replay-gain-mode: %s" text)
-            (cl-mapc
-             (lambda (line)
-               (cond
-                ((string-prefix-p "replay_gain_mode: " line)
-                 (setf (alist-get 'replay-gain-mode mpdmacs--player-options)
-                       (let ((value (substring line 18)))
-			                   (cond
-                          ((string= value "off") 'off)
-                          ((string= value "track") 'track)
-                          ((string= value "album") 'album)
-                          ((string= value "auto") 'auto)
-                          (t 'unknown)))))))
-             (split-string text "\n" t)))))))))
+   ("status"
+    (lambda (_conn rsp)
+      (cl-mapc
+       (lambda (line)
+         (cond
+          ((string-prefix-p "repeat: " line)
+           (setf (alist-get 'repeat mpdmacs--player-options)
+                 (mpdmacs--intern-boolean-value (substring line 8))))
+          ((string-prefix-p "random: " line)
+           (setf (alist-get 'random mpdmacs--player-options)
+                 (mpdmacs--intern-boolean-value (substring line 8))))
+          ((string-prefix-p "single: " line)
+           (setf (alist-get 'single mpdmacs--player-options)
+                 (let ((value (substring line 8)))
+                   (cond
+                    ((string= value "0") nil)
+                    ((string= value "1") t)
+                    ((string= value "oneshot") 'oneshot)
+                    (t 'unknown)))))
+          ((string-prefix-p "consume: " line)
+           (setf (alist-get 'consume mpdmacs--player-options)
+                 (mpdmacs--intern-boolean-value (substring line 9))))
+          ((string-prefix-p "state: " line)
+           (setf (alist-get 'state mpdmacs--player-options)
+                 (let ((value (substring line 7)))
+                   (cond
+                    ((string= "play" value) 'play)
+                    ((string= "stop" value) 'stop)
+                    ((string= "pause" value) 'pause)
+                    (t 'unknown)))))
+          ((string-prefix-p "xfade: " line)
+           (setf
+            (alist-get 'crossfade mpdmacs--player-options)
+            (mpdmacs--intern-number (substring line 7))))
+          ((string-prefix-p "volume: " line)
+           (setf
+            (alist-get 'volume mpdmacs--player-options)
+            (mpdmacs--intern-number (substring line 8))))))
+       (split-string text "\n" t))))
+   :or-else
+   (lambda (_conn rsp)
+     ;; Set all options to 'unknown?
+     (mpdmacs-log 'error "Failed to get player status: %s" rsp))
+   :and-then
+   ("replay_gain_status"
+    (lambda (_conn text)
+      ;; We expect a single line (of the form "replay_gain_mode:
+      ;; XXX", but just in case the protocol changes out from
+      ;; under us, be ready to process multiple lines.
+      (cl-mapc
+       (lambda (line)
+         (cond
+          ((string-prefix-p "replay_gain_mode: " line)
+           (setf (alist-get 'replay-gain-mode mpdmacs--player-options)
+                 (let ((value (substring line 18)))
+			             (cond
+                    ((string= value "off") 'off)
+                    ((string= value "track") 'track)
+                    ((string= value "album") 'album)
+                    ((string= value "auto") 'auto)
+                    (t 'unknown)))))))
+       (split-string text "\n" t))))
+   :or-else
+   (lambda (_conn text)
+     ;; Set this option to 'unknown?
+     (mpdmacs-log 'error "Failed to get replay-gain-mode: %s" text))))
 
 (defun mpdmacs--watcher (_conn subsys)
   "Idle-mode callback; SUBSYS is a list of subsystems..
