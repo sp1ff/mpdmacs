@@ -1,7 +1,7 @@
 dist_lisp_LISP = mpdmacs.el
 EXTRA_DIST = README.org
 CLEANFILES = .pkg-tmp mpdmacs-$(PACKAGE_VERSION).tar
-SUBDIRS = test
+SUBDIRS = doc test
 AM_ELCFLAGS = --eval '(require (quote bytecomp))'
 
 package: mpdmacs-$(PACKAGE_VERSION).tar $(srcdir)/README.org

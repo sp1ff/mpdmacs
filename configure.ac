@@ -5,5 +5,5 @@ AM_INIT_AUTOMAKE([-Wall -Werror gnits std-options dist-xz dist-zstd])
 
 AM_PATH_LISPDIR
 
-AC_CONFIG_FILES([Makefile test/Makefile])
+AC_CONFIG_FILES([Makefile doc/Makefile test/Makefile])
 AC_OUTPUT

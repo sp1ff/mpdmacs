@@ -1,0 +1,362 @@
+\input texinfo   @c -*- texinfo -*-
+@c %**start of header
+@setfilename mpdmacs.info
+@settitle mpdmacs
+@include version.texi
+@c %**end of header
+
+@dircategory Emacs
+@direntry
+* mpdmacs: (mpdmacs). A lightweight MPD client.
+@end direntry
+
+@copying
+This manual corresponds to mpdmacs version @value{VERSION}.
+
+Copyright @copyright{} 2024 Michael Herstine <sp1ff@@pobox.com>
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3
+or any later version published by the Free Software Foundation;
+with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
+A copy of the license is included in the section entitled ``GNU
+Free Documentation License''.
+
+A copy of the license is also available from the Free Software
+Foundation Web site at @url{https://www.gnu.org/licenses/fdl.html}.
+
+@end quotation
+
+This document was typeset with
+@uref{http://www.texinfo.org/, GNU Texinfo}.
+
+@end copying
+
+@c title & copyright-- won't appear in online output.
+@titlepage
+@title mpdmacs
+@subtitle A lightweight MPD client
+@author @email{sp1ff@@pobox.com}
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@c Output the table of the contents at the beginning.
+@contents
+
+@c ``top'' node-- this is the start of the online output, but doesn't
+@c appear in the printed manual
+@ifnottex
+@node Top
+@top mpdmacs
+
+A lightweight MPD client.
+
+This manual corresponds to mpdmacs version @value{VERSION}.
+
+@end ifnottex
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* Introduction::
+* Configuring the mpdmacs Minor Mode::
+* What the mpdmacs Minor Mode Can Do::
+* Roadmap & Contributing::
+* Index::
+* Function Index::
+* Variable Index::
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+@cindex MPD
+The @url{https://www.musicpd.org, Music Player Daemon} (or
+MPD) is a ``flexible, powerful, server-side application for playing
+music.'' It offers an
+@url{https://mpd.readthedocs.io/en/latest/protocol.html, API} for
+interacting with the daemon & building client applications.
+@cindex elmpd
+@url{https://www.unwoundstack.com/doc/mpdmacs/curr, elmpd} is a
+lightweight, asynchronous
+@url{https://www.gnu.org/software/emacs/manual/html_mono/elisp.html,
+Emacs Lisp} package for talking to an MPD instance over that protocol.
+
+mpdmacs is an
+@url{https://www.gnu.org/software/emacs/manual/html_mono/emacs.html,
+Emacs}
+@url{https://www.gnu.org/software/emacs/manual/html_mono/elisp.html#Minor-Modes,
+Minor Mode} built on elmpd that turns Emacs into a lightweight MPD
+client; so lightweight, in fact, that it provides almost no user
+interface-- merely a collection of commands & hooks that are generally
+available when writing code, reading mail & so forth.
+
+Instructions for obtaining & installing the package may be found in the
+@url{https://github.com/sp1ff/mpdmacs, README}. Configuration options
+are described @ref{Configuring the mpdmacs Minor Mode, below} and
+the features offered by the minor mode are described in
+@ref{What the mpdmacs Minor Mode Can Do}.
+
+@cindex configuration
+@node Configuring the mpdmacs Minor Mode
+@chapter Configuring the mpdmacs Minor Mode
+
+Before loading & enabling @code{mpdmacs-mode}, the reader will need to
+configure it with the location of the MPD instance to be controlled. If
+communications over TCP/IP are desired, set the following two variables:
+
+@defvr {User Option} mpdmacs-host
+The hostname on which MPD is listening.
+@end defvr
+
+@defvr {User Option} mpdmacs-port
+The port at which MPD is listening.
+@end defvr
+
+If, however, the reader would prefer to communicate with MPD over
+its Unix socket:
+
+@defvr {User Option} mpdmacs-socket
+The path of the Unix socket on which MPD is listening. If the TCP/IP
+socket is preferred, it is best to set this to nil: @code{mpdmacs-mode}
+will try the local socket first, if it exists.
+@end defvr
+
+mpdmacs supplies several interactive commands (see @pxref{What the
+mpdmacs Minor Mode Can Do, below}), with keybindings in
+@code{mpdmacs-mode-keymap};
+@cindex chord
+you may want to map a chord you find
+convenient to that keymap like so:
+
+@lisp
+(defun my-mpdmacs-hook ()
+  (global-set-key "\C-c m" 'mpdmacs-mode-keymap))
+(add-hook 'mpdmacs-mode-hook 'my-mpdmacs-hook)
+@end lisp
+
+Having installed & configured mpdmacs, load it as usual:
+
+@lisp
+(require 'mpdmacs)
+@end lisp
+
+At this point, mpdmacs has done nothing: it needs to be explicitly
+enabled by calling @code{mpdmacs-mode}:
+
+@deffn Command mpdmacs-mode &optional ARG
+Turn mpdmacs-mode on & off. Interactively, with no prefix argument,
+toggle the mode. A prefix argument enables the mode if the argument is
+positive, and disables it otherwise.
+
+When called from Lisp, toggle the mode if the argument is @code{toggle},
+disable the mode if the argument is a non-positive integer, and enables
+the mode otherwise (including if the argument is omitted or nil or a
+positive integer).
+@end deffn
+
+Enabling the minor mode will open a connection to your MPD server, begin
+monitoring its state for changes, and enable the caller to begin issuing
+commands.
+
+@node What the mpdmacs Minor Mode Can Do
+@chapter What the mpdmacs Minor Mode Can Do
+
+@cindex mpdel
+@cindex mpc
+mpdmacs, in contrast to mpdel or mpc, is not a full-fledged application,
+but rather a global minor mode. As such, it provides no (or, at least,
+not a dedicated) user interface but rather a suite of commands that are
+available at all times; while editing code, reading email or RSS, and so
+on.
+
+@c Generate the nodes for this menu with `C-c C-u C-m'.
+@menu
+* Acting as a Player Controller::
+* Setting MPD Configuration Options::
+* Playlists Control::
+* The Current Track::
+* Notifications::
+@end menu
+
+@cindex controlling the player
+@node Acting as a Player Controller
+@section Acting as a Player Controller
+
+The most basic function of the mpdmacs minor mode is to provide a set of
+command for controlling MPD playback.
+
+@deffn Command mpdmacs-play
+Begin playing the current playlist (cf. MPD command @code{play}).
+@end deffn
+
+@deffn Command mpdmacs-stop
+Stop playback (cf. MPD command @code{stop}).
+@end deffn
+
+@deffn Command mpdmacs-toggle-pause
+Pause or resume playback (toggles; cf. MPD command @code{pause}).
+@end deffn
+
+@deffn Command mpdmacs-replay
+Seeks back to time zero in the current track (cf. MPD command @code{seekcur}).
+@end deffn
+
+@deffn Command mpdmacs-next
+Plays the next song in the current playlist (cf. MPD command @code{next}).
+@end deffn
+
+@deffn Command mpdmacs-previous
+Plays the previous song in the current playlist (cf. MPD command @code{previous}).
+@end deffn
+
+@deffn Command mpdmacs-set-volume ARG
+Set the MPD volume to ARG, which must be an integer in the range 0-100
+(cf. MPD command @code{setvol}).
+@end deffn
+
+@deffn Command mpdmacs-inc-volume
+Increment the MPD volume; takes a numeric prefix argument (defaults to one).
+@end deffn
+
+@deffn Command mpdmacs-dec-volume
+Decrement the MPD volume; takes a numeric prefix argument (defaults to one).
+@end deffn
+
+@cindex configuring the player
+@node Setting MPD Configuration Options
+@section Setting MPD Configuration Options
+
+@deffn Command mpdmacs-toggle-random
+Toggle the state of the MPD @code{random} option.
+@end deffn
+
+@deffn Command mpdmacs-toggle-consume
+Toggle the state of the MPD @code{consume} option.
+@end deffn
+
+@deffn Command mpdmacs-set-crossfade
+Set the MPD @code{crossfade} option; takes a numeric prefix argument;
+lacking that read the number of seconds.
+@end deffn
+
+@deffn Command mpdmacs-rotate-single
+Rotate through the MPD @code{single} settings: off, enabled, or
+@code{oneshot}.
+@end deffn
+
+@deffn Command mpdmacs-rotate-replay-gain
+Rotate through the MPD @code{replay_gain_mode} settings:
+@enumerate
+@item
+off
+@item
+track
+@item
+album
+@item
+auto
+@end enumerate
+@end deffn
+
+@cindex MPD playlists
+@node Playlists Control
+@section Playlists Control
+
+@deffn Command mpdmacs-clear
+Clear the current play queue.
+@end deffn
+
+@deffn Command mpdmacs-load-playlist playlist
+Load the saved PLAYLIST into the queue. If invoked interactively, the
+stored playlist will be read interactively.
+@end deffn
+
+@deffn mpdmacs-send-to-playlist playlist
+Send the current track to PLAYLIST. If invoked interactively, the target
+playlist will be read interactively.
+@end deffn
+
+@cindex current track
+@node The Current Track
+@section The Current Track
+
+@cindex current song
+mpdmacs-mode does offer a few, small, user-interface elements beyond
+commands & notifications.
+
+@deffn Command mpdmacs-show-current-song
+Display information about the current song.
+This command will display the information in a dedicated buffer
+and display it. 
+@code{mpdmacs-show-current-song-hook} is run in the buffer before display.
+@end deffn
+
+@defvr {User Option} mpdmacs-current-song-buffer
+The name of the buffer to use for current song information.
+The default value is ``*Current Song*''.
+@end defvr
+
+@defvr {User Option} defvar mpdmacs-show-current-song-hook
+Normal hook run before @code{mpdmacs-show-current-song} returns. The
+hook will be invoked in the current song buffer.
+@end defvr
+
+@cindex mode line
+In addition, when mpdmacs-mode is enabled, the current track will be
+displayed in the Emacs mode line. This can be customized or entirely
+disabled by customizing:
+
+@defvr {User Option} mpdmacs-mode-line-update-function
+Function that will be invoked on current track change; if nil the mode
+line will not be updated.
+@end defvr
+
+@cindex notifications
+@node Notifications
+@section Notifications
+
+mpdmacs-mode defines a few hooks that will be run on certain player
+changes.
+
+@defvr {User Option} mpdmacs-player-state-changed-hook
+Normal hook invoked when any change to the player or mixer state is
+detected.
+@end defvr
+
+@defvr {User Option} mpdmacs-sticker-change-hook
+Normal hook invoked when any change to the sticker database is detected.
+@end defvr
+  
+@node Roadmap & Contributing
+@chapter Roadmap & Contributing
+
+mpdmacs was first released in late 2020 and saw intermittent development
+over the next few years. In the fall of 2024 I decided to finally call
+this ``1.0'', implying a certain level of stability (and notably the
+project will respect semver going forward).
+
+Bugs & feature requests are welcome in the
+@url{https://github.com/sp1ff/mpdmacs/issues, Issues} section of the
+project. Also, you can just reach out directly at
+@email{sp1ff@@pobox.com}, or shoot a webmention to me at my
+@url{https://www.unwoundstack.com,web site}.
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@node Function Index
+@unnumbered Function Index
+
+@printindex fn
+
+@node Variable Index
+@unnumbered Variable Index
+
+@printindex vr
+
+@bye
