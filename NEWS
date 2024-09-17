@@ -1,5 +1,17 @@
 mpdmacs News -- history of user-visible changes           -*- outline -*-
 
+* mpdmacs 1.0
+
+** 1.0.0
+
+*** User-visible changes
+
+**** Introduce a Texinfo user manual.
+*** Bugfixes
+
+**** Introduce `mpdmacs-current-song-line-face'
+
+This will remove an inadvertent dependency on `all-the-icons'.
 * 0.4 builds
 
 ** 0.4.1

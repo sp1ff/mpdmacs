@@ -1,6 +1,6 @@
 #+TITLE: mpdmacs
 #+DESCRIPTION: A lightweight, ergonomic MPD client for Emacs
-#+DATE: <2024-09-15 Sun 20:19>
+#+DATE: <2024-09-16 Mon 20:06>
 #+AUTODATE: t
 #+AUTHOR: sp1ff
 #+EMAIL: <sp1ff@pobox.com>
@@ -28,14 +28,14 @@ Emacs 29.1 & [[https://melpa.org/#/elmpd][elmpd]] latest.
 The simplest way to install mpdmacs is from [[https://melpa.org][MELPA]]. There's also an Emacs package available with each release: download the .tar file from [[https://github.com/sp1ff/mpdmacs/releases][Github]] or my personal [[https://www.unwoundstack/distros.html][page]] and say:
 
 #+BEGIN_SRC elisp
-  (package-install-file "mpdmacs-0.4.1.tar")
+  (package-install-file "mpdmacs-1.0.0.tar")
 #+END_SRC
 
-The Github [[https://github.com/sp1ff/mpdmacs/releases][releases]]  also include Autotools source tarballs:
+The Github [[https://github.com/sp1ff/mpdmacs/releases][releases]] also include Autotools source tarballs:
 
 #+BEGIN_SRC bash
-  curl -L -O https://github.com/sp1ff/mpdmacs/releases/download/0.4.1/mpdmacs-0.4.1.tar.gz
-  tar xf mpdmacs-0.4.1.tar.gz && cd mpdmacs-0.4.1
+  curl -L -O https://github.com/sp1ff/mpdmacs/releases/download/1.0.0/mpdmacs-1.0.0.tar.gz
+  tar xf mpdmacs-1.0.0.tar.gz && cd mpdmacs-1.0.0
   ./configure && make all check
   sudo make install
 #+END_SRC

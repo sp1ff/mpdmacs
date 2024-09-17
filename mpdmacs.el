@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020-2024 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
-;; Version: 0.4.1
+;; Version: 1.0.0
 ;; Package-Requires: ((emacs "29.1") (elmpd "0.3"))
 ;; Keywords: comm
 ;; URL: https://github.com/sp1ff/mpdmacs
@@ -58,7 +58,7 @@
 (require 'cl-lib)
 (require 'elmpd)
 
-(defconst mpdmacs-version "0.4.1")
+(defconst mpdmacs-version "1.0.0")
 
 (defgroup mpdmacs nil
   "A lightweight MPD client for Emacs."

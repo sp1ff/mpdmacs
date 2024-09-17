@@ -1,3 +1,16 @@
+2024-09-16  Michael Herstine  <sp1ff@pobox.com>
+
+	Cut release 1.0.0
+
+	Introduce `mpdmacs-current-song-line-face'.
+	This will remove an inadvertent dependency on `all-the-icons'.
+
+2024-09-15  Michael Herstine  <sp1ff@pobox.com>
+
+	Add a Texinfo manual to the project.
+	This patch will add a `doc` directory including a Texinfo manual
+	for mpdmacs. It also significantly upates the README as a result.
+
 2024-09-13  Michael Herstine  <sp1ff@pobox.com>
 
 	Cut release 0.4.1
