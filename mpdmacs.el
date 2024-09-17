@@ -110,10 +110,15 @@ unique."
   :group 'mpdmacs
   :type 'string)
 
-(defcustom  mpdmacs-current-song-buffer "*Current Song*"
+(defcustom mpdmacs-current-song-buffer "*Current Song*"
   "Buffer for displaying the current song."
   :group 'mpdmacs
   :type 'string)
+
+(defcustom mpdmacs-current-song-line-face 'font-lock-constant-face
+  "Face to use for the lines dividing songs in the current song buffer."
+  :group 'mpdmacs
+  :type 'symbol)
 
 (defvar mpdmacs-mode-line-update-function #'mpdmacs--update-mode-line)
 
@@ -682,7 +687,7 @@ level (i.e. we don't have to say \"pause 0\" or \"pause 1\")."
          (let ((inhibit-read-only t))
            (with-current-buffer (mpdmacs-current-song-buffer)
              (goto-char (point-max))
-             (insert (propertize (make-string 70 ?━) 'face 'all-the-icons-pink) "\n")
+             (insert (propertize (make-string 70 ?━) 'face mpdmacs-current-song-line-face) "\n")
              (insert text)
 	           (let ((playlists (gethash mpdmacs--current-song-file
                                        mpdmacs--playlist-reverse-index)))
