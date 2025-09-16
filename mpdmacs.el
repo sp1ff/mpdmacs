@@ -1,6 +1,6 @@
 ;;; mpdmacs.el --- A lightweight MPD client  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020-2024 Michael Herstine <sp1ff@pobox.com>
+;; Copyright (C) 2020-2025 Michael Herstine <sp1ff@pobox.com>
 
 ;; Author: Michael Herstine <sp1ff@pobox.com>
 ;; Version: 1.0.0
