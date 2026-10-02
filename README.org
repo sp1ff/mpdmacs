@@ -1,6 +1,6 @@
 #+TITLE: mpdmacs
 #+DESCRIPTION: A lightweight, ergonomic MPD client for Emacs
-#+DATE: <2025-09-16 Tue 17:29>
+#+DATE: <2026-10-02 Fri 10:21>
 #+AUTODATE: t
 #+AUTHOR: sp1ff
 #+EMAIL: <sp1ff@pobox.com>
@@ -25,7 +25,20 @@ This package is released under the [[https://www.gnu.org/licenses/gpl-3.0.en.htm
 Emacs 29.1 & [[https://melpa.org/#/elmpd][elmpd]] latest.
 * Installing
 
-The simplest way to install mpdmacs is from [[https://melpa.org][MELPA]]. There's also an Emacs package available with each release: download the .tar file from [[https://github.com/sp1ff/mpdmacs/releases][Github]] or my personal [[https://www.unwoundstack/distros.html][page]] and say:
+The simplest way to install mpdmacs is from [[https://melpa.org][MELPA]], something like:
+
+#+BEGIN_SRC elisp
+  (use-package mpdmacs
+    :ensure t
+    :demand t
+    :custom
+    (mpdmacs-host "127.0.0.1")
+    (mpdmacs-port 6600)
+    :config
+    (mpdmacs-mode))
+#+END_SRC
+
+There's also an Emacs package available with each release: download the .tar file from [[https://github.com/sp1ff/mpdmacs/releases][Github]] or my personal [[https://www.unwoundstack/distros.html][page]] and say:
 
 #+BEGIN_SRC elisp
   (package-install-file "mpdmacs-1.0.1.tar")
@@ -41,7 +54,7 @@ The Github [[https://github.com/sp1ff/mpdmacs/releases][releases]] also include 
 #+END_SRC
 * Getting Started
 
-Pull in =mpdmacs= as usual via =require=: =(require 'mpdmacs)=. Configure =mpdmacs= to connect to your MPD server by customizing the variables =mpdmacs-host=, =mpdmacs-port= & =mpdmacs-socket=.
+Pull in =mpdmacs= as usual via =require=: =(require 'mpdmacs)=. Configure =mpdmacs= to connect to your MPD server by customizing the variables =mpdmacs-host=, =mpdmacs-port= and/or =mpdmacs-socket=.
 
 At this point, =mpdmacs= has done nothing: you need to explicitly enable it by calling =(mpdmacs-mode)=. This will open a connection to your MPD server, begin monitoring its state for changes, and enable you to begin issuing commands.
 

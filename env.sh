@@ -1,1 +1,0 @@
-/home/mgh/doc/projects/mpdmacs/env.sh

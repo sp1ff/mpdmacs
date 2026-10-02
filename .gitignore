@@ -12,3 +12,4 @@ configure
 *.tar
 *.xz
 *.zst
+env.sh
